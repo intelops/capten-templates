@@ -1,0 +1,19 @@
+apiVersion: prodready.cluster/v1alpha1
+kind: ClusterClaim
+metadata:
+  labels:
+    cluster-owner: cem
+  name: dev-eks
+spec:
+  compositeDeletePolicy: Background
+  compositionRef:
+    name: cluster-aws
+  compositionSelector:
+    matchLabels:
+      cluster: eks
+      provider: aws
+  compositionUpdatePolicy: Automatic
+  id: dev-eks
+  parameters:
+    minNodeCount: 3
+    nodeSize: small
