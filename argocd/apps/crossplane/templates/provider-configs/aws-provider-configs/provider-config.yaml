@@ -6,9 +6,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/jebinjeb/crossplane.git
+    repoURL: https://github.com/intelops/capten-templates.git
     targetRevision: main
-    path: packages/k8s
+    path: crossplane/crossplane-config
   destination:
     server: https://kubernetes.default.svc
     namespace: crossplane
