@@ -1,0 +1,16 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: tekton-webhook-route
+  namespace: tek
+spec:
+  entryPoints:
+  - web
+  - websecure
+  routes:
+  - kind: Rule
+    match: Host(`webhook.tekton.optimizor.app`)
+    services:
+    - name: el-github-listener
+      port: 8080
+

@@ -1,0 +1,40 @@
+apiVersion: tekton.dev/v1beta1
+kind: ClusterTask
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"tekton.dev/v1beta1","kind":"ClusterTask","metadata":{"annotations":{},"name":"cosign-image-verify"},"spec":{"description":"Cosign sign an image","params":[{"description":"The image to be signed by cosign.","name":"image","type":"string"}],"steps":[{"image":"pradeepgoru/cosign:2.1.1","name":"cosign-sign","script":"mkdir -p ~/.docker/\nexport registry=`cat /workspace/dockerconfig/registry`\nexport username=`cat /workspace/dockerconfig/username`\nexport password=`cat /workspace/dockerconfig/password`\ncosign login $registry -u $username -p $password\nexport COSIGN_PASSWORD=\"\"\ncosign verify --key /workspace/cosign/cosign.pub $(params.image)\n","securityContext":{"privileged":true}}],"workspaces":[{"name":"source"},{"description":"An optional workspace that allows providing a .docker/config.json file for Buildah to access the container registry. The file should be placed at the root of the Workspace with name config.json.","name":"dockerconfig","optional":true},{"description":"Cosign private key to sign image","name":"cosign"}]}}
+  creationTimestamp: "2023-08-21T10:31:17Z"
+  generation: 1
+  name: cosign-image-verify
+  resourceVersion: "120691602"
+  uid: f5177064-5364-4d01-878b-b1d0027fc2bc
+spec:
+  description: Cosign sign an image
+  params:
+  - description: The image to be signed by cosign.
+    name: image
+    type: string
+  steps:
+  - image: pradeepgoru/cosign:2.1.1
+    name: cosign-sign
+    resources: {}
+    script: |
+      mkdir -p ~/.docker/
+      export registry=`cat /workspace/dockerconfig/registry`
+      export username=`cat /workspace/dockerconfig/username`
+      export password=`cat /workspace/dockerconfig/password`
+      cosign login $registry -u $username -p $password
+      export COSIGN_PASSWORD=""
+      cosign verify --key /workspace/cosign/cosign.pub $(params.image)
+    securityContext:
+      privileged: true
+  workspaces:
+  - name: source
+  - description: An optional workspace that allows providing a .docker/config.json
+      file for Buildah to access the container registry. The file should be placed
+      at the root of the Workspace with name config.json.
+    name: dockerconfig
+    optional: true
+  - description: Cosign private key to sign image
+    name: cosign

@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tekton-robot
+  namespace: tek
+secrets:
+- name: gitcred
+- name: ssh-key
+- name: docker-credentials
+- name: github-webhook-secret
+- name: cosign-key
+- name: cosign-pub
+- name: cosign-docker-secret
+- name: docker5
+- name: docker6
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: triggers-example-eventlistener-binding
+  namespace: tek
+subjects:
+- kind: ServiceAccount
+  name: tekton-robot
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tekton-triggers-eventlistener-roles
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: trigger-el-clusterbinding
+subjects:
+- kind: ServiceAccount
+  name: tekton-robot
+  namespace: tek
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tekton-triggers-eventlistener-clusterroles
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tekton-robot-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tekton-robot-role
+subjects:
+- kind: ServiceAccount
+  name: tekton-robot
+  namespace: tek
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tekton-robot-role
+rules:
+- apiGroups: ["triggers.tekton.dev"]
+  resources: ["clustertriggerbindings"]
+  verbs: ["get", "list", "watch" , "update" , "create"]
+
