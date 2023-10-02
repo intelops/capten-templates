@@ -1,0 +1,14 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: tekton-pipeline-dev-cluster
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/intelops/capten-templates.git
+    targetRevision: main
+    path: tekton/tekton-pipelines/tekton-yamls
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: tek
