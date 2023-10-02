@@ -9,7 +9,7 @@ spec:
     repoURL: https://github.com/intelops/capten-templates.git
     targetRevision: HEAD
     path: argocd/apps/clusters
-    helm
+    helm:
       valueFiles:
       - values.yaml
   destination:

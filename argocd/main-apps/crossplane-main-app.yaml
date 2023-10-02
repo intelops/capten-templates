@@ -9,7 +9,7 @@ spec:
     repoURL: https://github.com/intelops/capten-templates.git
     targetRevision: main
     path: argocd/apps/crossplane
-    helm
+    helm:
       valueFiles:
       - values.yaml
   destination:
