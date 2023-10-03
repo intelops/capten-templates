@@ -1,0 +1,55 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: manual-pipelinerun-
+spec:
+  serviceAccountName: tekton-robot
+  pipelineRef:
+    name: tekton-ci
+  podTemplate:
+    securityContext:
+      fsGroup: 65532
+  workspaces:
+  - name: shared-data
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 30Gi
+  - name: git-credentials
+    secret:
+      secretName: gitcred
+  - name: docker-credentials
+    secret:
+      secretName: docker-credentials
+  - name: cosign
+    secret:
+      secretName: cosign-key
+  - name: dockerconfig
+    secret:
+      secretName: cosign-docker-secret
+  - name: cosign-pub
+    secret:
+      secretName: cosign-pub
+  - name: sonar-token
+    secret:
+      secretName: sonar-token
+  - name: sonar-project.properties
+    configmap:
+      name: sonar-project.properties
+  params:
+  - name: repo-url
+    value: https://github.com/Sheril5/vault-cred.git
+  - name: imageUrl
+    value: ghcr.io/sheril5/vault-cred
+  - name: imageTag
+    value: main
+  - name: PARAM_SCM
+    value: "github.com"
+  - name: revision
+    value: main
+  - name: eventname
+    value: push
+

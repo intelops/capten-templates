@@ -1,0 +1,214 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: github-tekton-ci
+  namespace: tek
+spec:
+  description: |
+    This pipeline clones a git repo, then echoes the README file to the stout.
+  params:
+  - name: repo-url
+    type: string 
+    # default: https://github.com/Sheril5/vault-cred.git
+    description: The git repo URL to clone from.
+  - name: revision
+    type: string
+  - name: PARAM_SCM
+    description: Define the Source code Management URL
+    type: string
+    default: "github.com"    
+  - name: pathToContext
+    description: The path to the build context, used by Kaniko - within the workspace
+    default: .
+  - name: imageUrl
+    description: Image name including repository
+  - name: imageTag
+    description: Image tag
+    default: "latest"
+  - name: eventname
+    description: name of event happens
+  - name: reponame
+    description: repo name
+  - name: retag
+    description: rel tag
+    #- name: docker
+    #description: docker img
+    #- name: ghcr
+    #description: ghcr img
+  - name: reg
+    description: registry
+  workspaces:
+  - name: shared-data
+    description: |
+      This workspace contains the cloned repo files, so they can be read by the
+      next task.
+  - name: git-credentials
+    description: basic-auth
+    #- name: gitlab
+    #description: auth
+  - name: docker-credentials
+    description: docker cred
+  - name: cosign
+  - name: dockerconfig
+  - name: cosign-pub
+    #- name: docker-hub
+    #- name: release-notes
+    #- name: input
+  tasks:
+  - name: fetch-source
+    taskRef:
+      name: git-clone
+      kind: ClusterTask
+    workspaces:
+    - name: output
+      workspace: shared-data
+    - name: basic-auth
+#    - name: ssh-directory
+      workspace: git-credentials
+    params:
+    - name: url
+      value: $(params.repo-url)
+    - name: PARAM_SCM
+      value: $(params.PARAM_SCM)
+    - name: revision
+      value: $(params.revision)
+  - name: build
+    taskRef:
+      name: kaniko-build
+      kind: ClusterTask
+    runAfter:
+      - fetch-source
+    workspaces:
+      - name: source
+        workspace: shared-data
+      - name: dockerconfig
+        workspace: docker-credentials
+    params:
+      - name: CONTEXT
+        value: $(params.pathToContext)
+      - name: IMAGE
+        value: $(params.imageUrl):$(params.imageTag)
+      - name: reg
+        value: $(params.reg)
+        #when:
+        #- input: "$(params.reg)"
+        #operator: in
+        #values: [ "ghcr.io" , "docker.io" ]
+
+  - name: cosign-sign
+    runAfter: ["build"]
+    #runAfter: ["helm-release"]
+    taskRef:
+      name: cosign-sign
+      kind: ClusterTask
+    workspaces:
+    - name: source
+      workspace: shared-data
+    - name: dockerconfig
+      workspace: dockerconfig
+      #- name: dockerhub
+      #workspace: docker-hub
+    - name: cosign
+      workspace: cosign
+    params:
+    - name: image
+      value: "$(params.imageUrl)@$(tasks.build.results.IMAGE_DIGEST)"
+    - name: eventname
+      value: "$(params.eventname)"
+    when:
+    - input: "$(params.eventname)"
+      operator: in
+      values: [ "push" , "tag" ,"release" ]
+  - name: cosign-image-verify
+    runAfter: ["cosign-sign"]
+    taskRef:
+      name: cosign-image-verify
+      kind: ClusterTask
+    workspaces:
+    - name: source
+      workspace: shared-data
+    - name: dockerconfig
+      workspace: dockerconfig
+      #- name: dockerhub
+      #workspace: docker-hub
+    - name: cosign
+      workspace: cosign-pub
+    params:
+    - name: image
+      value: "$(params.imageUrl)@$(tasks.build.results.IMAGE_DIGEST)"
+    - name: eventname
+      value: "$(params.eventname)"
+    when:
+    - input: "$(params.eventname)"
+      operator: in
+      values: [ "push" , "tag" , "release" ]
+
+  finally:
+    - name: github-set-status-fail
+      when:
+      - input: $(tasks.status)
+        operator: in
+        values: [ "Failed", "None" ] 
+      taskRef:
+        name: github-set-status
+        kind: ClusterTask
+      params:
+        - name: "STATE"
+          value: "failed"
+        - name: "GITHUB_HOST_URL"
+          value: "api.github.com"
+        - name: "REPO_FULL_NAME"
+          value: "$(params.reponame)"
+        - name: "GITHUB_TOKEN_SECRET_NAME"
+          value: "git1"
+        - name: "GITHUB_TOKEN_SECRET_KEY"
+          value: "token"
+        - name: "SHA"
+          value: "$(params.revision)"
+        - name: "TARGET_URL"
+          value: "http://localhost:8001/api/v1/namespaces/tekton-pipelines/services/tekton-dashboard:http/proxy/"
+          #value: "dashboard.domain.app"
+        - name: "CONTEXT"
+          value: "tekton-pipeline"
+        - name: "DESCRIPTION"
+          value: "An error occurred building your commit in Tekton"
+
+    - name: github-set-status-success
+      when:
+      - input: $(tasks.status)
+        operator: in
+        values: [ "Succeeded", "Completed" ] 
+      taskRef:
+        name: github-set-status
+        kind: ClusterTask
+      params:
+        - name: "STATE"
+          value: "success"
+        - name: "GITHUB_HOST_URL"
+          value: "api.github.com"
+        - name: "REPO_FULL_NAME"
+          value: "$(params.reponame)"
+        - name: "GITHUB_TOKEN_SECRET_NAME"
+          value: "git1"
+        - name: "GITHUB_TOKEN_SECRET_KEY"
+          value: "token"
+        - name: "SHA"
+          value: "$(params.revision)"
+        - name: "TARGET_URL"
+          value: "http://localhost:8001/api/v1/namespaces/tekton-pipelines/services/tekton-dashboard:http/proxy/"
+          #value: "dashboard.domain.app"
+        - name: "CONTEXT"
+          value: "tekton-pipeline"
+        - name: "DESCRIPTION"
+          value: "Finished building your commit in Tekton"
+    
+
+
+
+
+
+ 
+
+
+
+

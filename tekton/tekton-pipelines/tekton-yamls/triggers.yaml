@@ -1,0 +1,353 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: github-listener
+  namespace: tek
+spec:
+  triggers:
+    - name: cel-trig-main-push-event
+      interceptors:
+        - ref:
+            name: "cel"
+          params:
+              - name: "filter"
+                value: >
+                  (
+                    header.match('x-github-event', 'push')  && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master')
+                  )
+              - name: "overlays"
+                value:
+                - key: image_tag
+                  expression: "\"latest\""
+                - key: event
+                  expression: "\"push\""
+                - key: registry
+                  expression: "\"ghcr.io\""
+            
+      bindings:
+        - name: revision
+          value: $(body.head_commit.id)
+        - name: repo-url
+          value: $(body.repository.clone_url)
+        - name: IMAGE
+          value: ghcr.io/sheril5/$(body.repository.name)
+          #value: registry.gitlab.com/sheril5/vault-cred              #give the url of the registry where the image needs to be pushed
+        #value: sherilfio/vault-cred   #In the IMAGE give the registry url where the image needs to be pushed
+        - ref: github-pr-trigger-binding
+      template:
+        ref: github-pr-trigger-template-github
+
+    - name: cel-trig-gitlab-push-event
+      interceptors:
+        - ref:
+            name: "cel"
+          params:
+              - name: "filter"
+                value: >
+                  (
+                     header.match('X-Gitlab-Event','Push Hook')  && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master')
+                  )
+              - name: "overlays"
+                value:
+                - key: image_tag
+                  expression: "\"latest\""
+                - key: event
+                  expression: "body.event_name"
+                - key: registry
+                  expression: "\"registry.gitlab.com\""
+                  #expression: "\"docker.io\""
+
+      bindings:
+      - name: revision
+        value: $(body.checkout_sha)
+      - name: repo-url
+        value: $(body.repository.git_http_url)
+      - name: REPONAME
+        value: $(body.repository.name)
+      - name: IMAGE
+        #value: ghcr.io/sheril5/$(body.repository.name)
+        value: registry.gitlab.com/sheril5/vault-cred
+        #value: sherilfio/vault-cred
+      - ref: github-pr-trigger-binding
+      template:
+        ref: github-pr-trigger-template-gitlab
+
+
+    - name: cel-trig-main-tag-event
+      interceptors:
+        - ref:
+            name: "cel"
+          params:
+            - name: "filter"
+              value: >
+                (
+                  header.match('x-github-event', 'create') && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master' || body.ref_type == 'tag'  )
+                )
+            - name: "overlays"
+              value:
+              - key: image_tag
+                expression: "body.ref"
+              - key: event
+                expression: "\"tag\""
+      bindings:
+      - name: revision
+        value: $(body.master_branch)
+      - ref: github-pr-trigger-binding
+      template:
+        ref: github-pr-trigger-template
+
+    - name: cel-trig-main-release-event
+      interceptors:
+      - ref:
+          name: "cel"
+        params:
+            - name: "filter"
+              value: >
+                (   
+                  header.match('x-github-event', 'release') && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master' || body.action in ['created'] )
+                )
+            - name: "overlays"
+              value:
+              - key: image_tag
+                expression: "body.release.tag_name"
+              - key: event
+                expression: "\"release\""
+            
+      bindings:
+        - name: revision
+          value: $(body.release.target_commitish)
+        - ref: github-pr-trigger-binding
+      template:
+        ref: github-pr-trigger-template
+
+    - name: cel-trig-main-pull-request
+      interceptors:  
+        - ref:
+            name: "cel"
+          params:
+              - name: "filter"
+                value: >
+                  (
+                    header.match('x-github-event', 'pull_request') && body.action in ['opened']  && (body.pull_request.base.ref == 'main' || body.pull_request.base.ref == 'master')          
+                  )
+              - name: "overlays"
+                value: 
+                - key: image_tag
+                  expression: "['pr', string(body.pull_request.number)].join('-')"
+                - key: event
+                  expression: "\"pull-request\""
+      bindings:
+        - name: revision
+          value: $(body.pull_request.head.sha)
+        - ref: github-pr-trigger-binding
+      template:
+        ref: github-pr-trigger-template
+        
+  resources:
+    kubernetesResource:
+      spec:
+        template:
+          spec:
+            serviceAccountName: tekton-robot
+            containers:
+              - resources:
+                  requests:
+                    memory: "64Mi"
+                    cpu: "250m"
+                  limits:
+                    memory: "128Mi"
+                    cpu: "500m"
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: github-pr-trigger-binding
+  namespace: tek
+spec:
+  params:
+          #- name: repo-url
+          #value: $(body.repository.clone_url)  
+  - name: PLRNAME
+    value: github-proj-uuid-pr-
+    #- name: IMAGE
+    #value: ghcr.io/sheril5/$(body.repository.name)
+    #value: $(extensions.registry)/sherilfio/$(body.repository.name)
+  - name: IMAGETAG
+    value: $(extensions.image_tag)
+  - name: EVENT
+    value: $(extensions.event)
+    #- name: REPONAME
+    #value: $(body.repository.full_name)
+  - name: rel-tag
+    value: $(extensions.image_tag)
+  - name: REG
+    value: $(extensions.registry)
+
+    
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: github-pr-trigger-template-github
+  namespace: tek
+spec:
+  params:
+  - name: repo-url
+    description: repo url
+  - name: revision
+    description: sha,branch
+  - name: IMAGE
+    description: image name
+  - name: IMAGETAG
+    description: tag of img
+  - name: EVENT
+    description: event occured
+  - name: REPONAME
+    description: repo name
+  - name: rel-tag
+    description: release tag
+  - name: REG
+    description:  reg
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1beta1
+    kind: PipelineRun
+    metadata:
+      generateName: trigger-tekton-ci-
+    spec:
+      serviceAccountName: tekton-robot
+      pipelineRef:
+        name: github-tekton-ci
+      podTemplate:
+        securityContext:
+          fsGroup: 65532
+      workspaces:
+      - name: shared-data
+        volumeClaimTemplate:
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 30Gi   
+      - name: git-credentials
+        secret:
+          secretName: gitcred
+      - name: docker-credentials
+        secret:
+          secretName: docker-credentials   #give the credential of the registry like ghcr,docker
+      - name: dockerconfig
+        secret:
+          secretName: cosign-docker-secret # If you need to provide dockerconfig
+      - name: cosign
+        secret:
+          secretName: cosign-key
+      - name: cosign-pub
+        secret:
+          secretName: cosign-pub     
+      params:
+      - name: repo-url
+        value: $(tt.params.repo-url)
+      - name: revision
+        value: $(tt.params.revision)
+      - name: imageUrl
+        value: $(tt.params.IMAGE)
+      - name: imageTag
+        value: $(tt.params.IMAGETAG)
+      - name: eventname
+        value: $(tt.params.EVENT)
+      - name: reponame
+        value: $(tt.params.REPONAME)
+      - name: retag
+        value: $(tt.params.rel-tag)
+      - name: reg
+        value: $(tt.params.REG)
+      
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: github-pr-trigger-template-gitlab
+  namespace: tek
+spec:
+  params:
+  - name: repo-url
+    description: repo url
+  - name: revision
+    description: sha,branch
+  - name: IMAGE
+    description: image name
+  - name: IMAGETAG
+    description: tag of img
+  - name: EVENT
+    description: event occured
+  - name: REPONAME
+    description: repo name
+  - name: rel-tag
+    description: release tag
+  - name: REG
+    description:  reg
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1beta1
+    kind: PipelineRun
+    metadata:
+      generateName: trigger-tekton-ci-
+    spec:
+      serviceAccountName: tekton-robot
+      pipelineRef:
+        name: gitlab-tekton-ci
+      podTemplate:
+        securityContext:
+          fsGroup: 65532
+      workspaces:
+      - name: shared-data
+        volumeClaimTemplate:
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 30Gi   
+      - name: git-credentials
+        secret:
+          secretName: gitlab
+      - name: docker-credentials
+        secret:
+                #secretName: docker6
+          secretName: docker5
+      - name: dockerconfig
+        secret:
+          secretName: cosign-docker-secret # If you need to provide dockerconfig
+      - name: cosign
+        secret:
+          secretName: cosign-key
+      - name: cosign-pub
+        secret:
+          secretName: cosign-pub       
+   
+      params:
+      - name: repo-url
+        value: $(tt.params.repo-url)
+      - name: revision
+        value: $(tt.params.revision)
+      - name: imageUrl
+        value: $(tt.params.IMAGE)
+      - name: imageTag
+        value: $(tt.params.IMAGETAG)
+      - name: eventname
+        value: $(tt.params.EVENT)
+      - name: reponame
+        value: $(tt.params.REPONAME)
+      - name: retag
+        value: $(tt.params.rel-tag)
+      - name: reg
+        value: $(tt.params.REG)
+
+
+
+
+
+  
+
+      
+
+   
