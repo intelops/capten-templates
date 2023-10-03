@@ -2,14 +2,14 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: tekton-apps
-  namespace: argocd
+  namespace: argo-cd
 spec:
   project: default
   source:
     repoURL: https://github.com/intelops/capten-templates.git
     targetRevision: HEAD
     path: argocd/apps/tekton
-    helm
+    helm:
       valueFiles:
       - values.yaml
   destination:
