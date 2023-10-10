@@ -2,10 +2,9 @@ apiVersion: triggers.tekton.dev/v1beta1
 kind: EventListener
 metadata:
   name: github-listener
-  namespace: tek
 spec:
   triggers:
-    - name: cel-trig-main-push-event
+    - name: github-push-event
       interceptors:
         - ref:
             name: "cel"
@@ -21,8 +20,6 @@ spec:
                   expression: "\"latest\""
                 - key: event
                   expression: "\"push\""
-                - key: registry
-                  expression: "\"ghcr.io\""
             
       bindings:
         - name: revision
@@ -30,14 +27,14 @@ spec:
         - name: repo-url
           value: $(body.repository.clone_url)
         - name: IMAGE
-          value: ghcr.io/sheril5/$(body.repository.name)
-          #value: registry.gitlab.com/sheril5/vault-cred              #give the url of the registry where the image needs to be pushed
-        #value: sherilfio/vault-cred   #In the IMAGE give the registry url where the image needs to be pushed
-        - ref: github-pr-trigger-binding
+          value: ghcr.io/$(body.repository.full_name)
+        - name: REPONAME
+          value: $(body.repository.full_name)
+        - ref: trigger-binding
       template:
-        ref: github-pr-trigger-template-github
+        ref: trigger-template-github
 
-    - name: cel-trig-gitlab-push-event
+    - name: gitlab-push-event
       interceptors:
         - ref:
             name: "cel"
@@ -45,7 +42,7 @@ spec:
               - name: "filter"
                 value: >
                   (
-                     header.match('X-Gitlab-Event','Push Hook')  && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master')
+                     header.match('X-Gitlab-Event', 'Push Hook') && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master')
                   )
               - name: "overlays"
                 value:
@@ -53,9 +50,6 @@ spec:
                   expression: "\"latest\""
                 - key: event
                   expression: "body.event_name"
-                - key: registry
-                  expression: "\"registry.gitlab.com\""
-                  #expression: "\"docker.io\""
 
       bindings:
       - name: revision
@@ -63,64 +57,72 @@ spec:
       - name: repo-url
         value: $(body.repository.git_http_url)
       - name: REPONAME
-        value: $(body.repository.name)
+        value: $(body.project.path_with_namespace)
       - name: IMAGE
-        #value: ghcr.io/sheril5/$(body.repository.name)
-        value: registry.gitlab.com/sheril5/vault-cred
-        #value: sherilfio/vault-cred
-      - ref: github-pr-trigger-binding
+        value: registry.gitlab.com/$(body.user_name)/$(body.project.name)
+      - ref: trigger-binding
       template:
-        ref: github-pr-trigger-template-gitlab
+        ref: trigger-template-gitlab
 
 
-    - name: cel-trig-main-tag-event
+    - name: tag-event-github
       interceptors:
         - ref:
             name: "cel"
           params:
-            - name: "filter"
-              value: >
-                (
-                  header.match('x-github-event', 'create') && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master' || body.ref_type == 'tag'  )
-                )
-            - name: "overlays"
-              value:
-              - key: image_tag
-                expression: "body.ref"
-              - key: event
-                expression: "\"tag\""
+              - name: "filter"
+                value: >
+                  (
+                    header.match('x-github-event', 'create') && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master' || body.ref_type == 'tag'  )
+                  )
+              - name: "overlays"
+                value:
+                - key: image_tag
+                  expression: "body.ref"
+                - key: event
+                  expression: "\"tag\""
       bindings:
       - name: revision
         value: $(body.master_branch)
-      - ref: github-pr-trigger-binding
+      - name: repo-url
+        value: $(body.repository.clone_url)
+      - name: REPONAME
+        value: $(body.repository.full_name)
+      - name: IMAGE
+        value: ghcr.io/$(body.repository.full_name)
+      - ref: trigger-binding
       template:
-        ref: github-pr-trigger-template
-
-    - name: cel-trig-main-release-event
+        ref: trigger-template-github
+    - name: tag-event-gitlab
       interceptors:
-      - ref:
-          name: "cel"
-        params:
-            - name: "filter"
-              value: >
-                (   
-                  header.match('x-github-event', 'release') && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master' || body.action in ['created'] )
-                )
-            - name: "overlays"
-              value:
-              - key: image_tag
-                expression: "body.release.tag_name"
-              - key: event
-                expression: "\"release\""
-            
+        - ref:
+            name: "cel"
+          params:
+              - name: "filter"
+                value: >
+                  (
+                    header.match('X-Gitlab-Event', 'Tag Push Hook') && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master' || body.object_kind == 'tag_push'  )
+                  )
+              - name: "overlays"
+                value:
+                - key: image_tag
+                  expression: "body.ref.split('/')[2]"
+                - key: event
+                  expression: "\"tag\""
       bindings:
-        - name: revision
-          value: $(body.release.target_commitish)
-        - ref: github-pr-trigger-binding
+      - name: revision
+        value: $(body.commits[0].id)
+      - name: repo-url
+        value: $(body.repository.git_http_url)
+      - name: REPONAME
+        value: $(body.project.path_with_namespace)
+      - name: IMAGE
+        value: registry.gitlab.com/$(body.user_name)/$(body.project.name)
+      - ref: trigger-binding
       template:
-        ref: github-pr-trigger-template
+        ref: trigger-template-gitlab
 
-    - name: cel-trig-main-pull-request
+    - name: pull-request-github
       interceptors:  
         - ref:
             name: "cel"
@@ -139,10 +141,47 @@ spec:
       bindings:
         - name: revision
           value: $(body.pull_request.head.sha)
-        - ref: github-pr-trigger-binding
+        - name: repo-url
+          value: $(body.repository.clone_url)
+        - name: IMAGE
+          value:  ghcr.io/$(body.repository.full_name)  
+        - name: REPONAME
+          value: $(body.repository.full_name)
+        - ref: trigger-binding
       template:
-        ref: github-pr-trigger-template
-        
+        ref: trigger-template-github
+
+    - name: merge-request-gitlab
+      interceptors:
+        - ref:
+            name: "cel"
+          params:
+              - name: "filter"
+                value: >
+                  (
+                    header.match('X-Gitlab-Event', 'Merge Request Hook') && body.object_attributes.action in ['open'] && ( body.object_attributes.target_branch == 'main' || body.object_attributes.target_branch == 'master' )
+                  )
+              - name: "overlays"
+                value:
+                - key: image_tag
+                  expression: "['mr', string(body.object_attributes.iid)].join('-')"
+                - key: event
+                  expression: "\"merge-request\""
+      bindings:
+        - name: revision
+          value: $(body.object_attributes.last_commit.id)
+        - name: repo-url
+          value: $(body.project.http_url)
+          #- name: REPONAME
+          #value: $(body.user.name)/$(body.project.name)
+        - name: REPONAME
+          value: $(body.project.path_with_namespace)
+        - name: IMAGE
+          value: registry.gitlab.com/$(body.user.name)/$(body.project.name)
+        - ref: trigger-binding
+      template:
+        ref: trigger-template-gitlab
+    
   resources:
     kubernetesResource:
       spec:
@@ -161,35 +200,23 @@ spec:
 apiVersion: triggers.tekton.dev/v1beta1
 kind: TriggerBinding
 metadata:
-  name: github-pr-trigger-binding
-  namespace: tek
+  name: trigger-binding
 spec:
   params:
-          #- name: repo-url
-          #value: $(body.repository.clone_url)  
   - name: PLRNAME
     value: github-proj-uuid-pr-
-    #- name: IMAGE
-    #value: ghcr.io/sheril5/$(body.repository.name)
-    #value: $(extensions.registry)/sherilfio/$(body.repository.name)
   - name: IMAGETAG
     value: $(extensions.image_tag)
   - name: EVENT
     value: $(extensions.event)
-    #- name: REPONAME
-    #value: $(body.repository.full_name)
   - name: rel-tag
     value: $(extensions.image_tag)
-  - name: REG
-    value: $(extensions.registry)
-
-    
+  
 ---
 apiVersion: triggers.tekton.dev/v1beta1
 kind: TriggerTemplate
 metadata:
-  name: github-pr-trigger-template-github
-  namespace: tek
+  name: trigger-template-github
 spec:
   params:
   - name: repo-url
@@ -206,8 +233,6 @@ spec:
     description: repo name
   - name: rel-tag
     description: release tag
-  - name: REG
-    description:  reg
   resourcetemplates:
   - apiVersion: tekton.dev/v1beta1
     kind: PipelineRun
@@ -259,15 +284,12 @@ spec:
         value: $(tt.params.REPONAME)
       - name: retag
         value: $(tt.params.rel-tag)
-      - name: reg
-        value: $(tt.params.REG)
       
 ---
 apiVersion: triggers.tekton.dev/v1beta1
 kind: TriggerTemplate
 metadata:
-  name: github-pr-trigger-template-gitlab
-  namespace: tek
+  name: trigger-template-gitlab
 spec:
   params:
   - name: repo-url
@@ -284,8 +306,6 @@ spec:
     description: repo name
   - name: rel-tag
     description: release tag
-  - name: REG
-    description:  reg
   resourcetemplates:
   - apiVersion: tekton.dev/v1beta1
     kind: PipelineRun
@@ -312,11 +332,10 @@ spec:
           secretName: gitlab
       - name: docker-credentials
         secret:
-                #secretName: docker6
           secretName: docker5
       - name: dockerconfig
         secret:
-          secretName: cosign-docker-secret # If you need to provide dockerconfig
+          secretName: cosign-docker-secret-gitlab # If you need to provide dockerconfig
       - name: cosign
         secret:
           secretName: cosign-key
@@ -339,8 +358,6 @@ spec:
         value: $(tt.params.REPONAME)
       - name: retag
         value: $(tt.params.rel-tag)
-      - name: reg
-        value: $(tt.params.REG)
 
 
 
@@ -348,6 +365,4 @@ spec:
 
   
 
-      
 
-   
