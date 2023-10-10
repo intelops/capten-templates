@@ -2,7 +2,6 @@ apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
   name: github-tekton-ci
-  namespace: tek
 spec:
   description: |
     This pipeline clones a git repo, then echoes the README file to the stout.
@@ -33,10 +32,7 @@ spec:
     description: rel tag
     #- name: docker
     #description: docker img
-    #- name: ghcr
-    #description: ghcr img
-  - name: reg
-    description: registry
+ 
   workspaces:
   - name: shared-data
     description: |
@@ -88,8 +84,6 @@ spec:
         value: $(params.pathToContext)
       - name: IMAGE
         value: $(params.imageUrl):$(params.imageTag)
-      - name: reg
-        value: $(params.reg)
         #when:
         #- input: "$(params.reg)"
         #operator: in
@@ -142,6 +136,26 @@ spec:
     - input: "$(params.eventname)"
       operator: in
       values: [ "push" , "tag" , "release" ]
+      #- name: helm-release
+      #runAfter:
+      #- build
+      #taskRef:
+      #name: update-github-release
+      #kind: ClusterTask
+      #params:
+      #- name: "path2HelmChart"
+      #value: "charts/vault-cred"
+      #- name: "chartName"
+      #value: "vault-cred"
+      #- name: "chartVersion"
+      #value: "$(params.retag)"
+      #- name: "githubTokenSecret"
+      #value: "git1"
+      #- name: "githubTokenKey"
+      #value: "token"
+      #workspaces:
+      #- name: source
+      #workspace: shared-data
 
   finally:
     - name: github-set-status-fail
