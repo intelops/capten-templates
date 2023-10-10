@@ -12,6 +12,8 @@ secrets:
 - name: cosign-docker-secret
 - name: docker5
 - name: docker6
+- name: gitlab-token
+
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1

@@ -8,7 +8,6 @@ spec:
   params:
   - name: repo-url
     type: string 
-    # default: https://github.com/Sheril5/vault-cred.git
     description: The git repo URL to clone from.
   - name: revision
     type: string
@@ -30,8 +29,6 @@ spec:
     description: repo name
   - name: retag
     description: rel tag
-    #- name: docker
-    #description: docker img
  
   workspaces:
   - name: shared-data
@@ -40,16 +37,11 @@ spec:
       next task.
   - name: git-credentials
     description: basic-auth
-    #- name: gitlab
-    #description: auth
   - name: docker-credentials
     description: docker cred
   - name: cosign
   - name: dockerconfig
   - name: cosign-pub
-    #- name: docker-hub
-    #- name: release-notes
-    #- name: input
   tasks:
   - name: fetch-source
     taskRef:
@@ -84,14 +76,9 @@ spec:
         value: $(params.pathToContext)
       - name: IMAGE
         value: $(params.imageUrl):$(params.imageTag)
-        #when:
-        #- input: "$(params.reg)"
-        #operator: in
-        #values: [ "ghcr.io" , "docker.io" ]
 
   - name: cosign-sign
     runAfter: ["build"]
-    #runAfter: ["helm-release"]
     taskRef:
       name: cosign-sign
       kind: ClusterTask
@@ -100,8 +87,6 @@ spec:
       workspace: shared-data
     - name: dockerconfig
       workspace: dockerconfig
-      #- name: dockerhub
-      #workspace: docker-hub
     - name: cosign
       workspace: cosign
     params:
@@ -123,8 +108,6 @@ spec:
       workspace: shared-data
     - name: dockerconfig
       workspace: dockerconfig
-      #- name: dockerhub
-      #workspace: docker-hub
     - name: cosign
       workspace: cosign-pub
     params:
@@ -136,26 +119,6 @@ spec:
     - input: "$(params.eventname)"
       operator: in
       values: [ "push" , "tag" , "release" ]
-      #- name: helm-release
-      #runAfter:
-      #- build
-      #taskRef:
-      #name: update-github-release
-      #kind: ClusterTask
-      #params:
-      #- name: "path2HelmChart"
-      #value: "charts/vault-cred"
-      #- name: "chartName"
-      #value: "vault-cred"
-      #- name: "chartVersion"
-      #value: "$(params.retag)"
-      #- name: "githubTokenSecret"
-      #value: "git1"
-      #- name: "githubTokenKey"
-      #value: "token"
-      #workspaces:
-      #- name: source
-      #workspace: shared-data
 
   finally:
     - name: github-set-status-fail

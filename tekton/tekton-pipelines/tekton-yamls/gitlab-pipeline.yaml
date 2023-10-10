@@ -8,7 +8,6 @@ spec:
   params:
   - name: repo-url
     type: string 
-    # default: https://github.com/Sheril5/vault-cred.git
     description: The git repo URL to clone from.
   - name: revision
     type: string
@@ -162,13 +161,11 @@ spec:
         - name: "STATE"
           value: "success"
         - name: "GITLAB_HOST_URL"
-          #value: "api.gitlab.com"
           value: "gitlab.com"
         - name: "API_PATH_PREFIX"
           value: "/api/v4"
         - name: "REPO_FULL_NAME"
           value: "$(params.reponame)"
-          #value: "Sheril5/vault-cred"
         - name: "GITLAB_TOKEN_SECRET_NAME"
           value: "gitlab-token"
         - name: "GITLAB_TOKEN_SECRET_KEY"
