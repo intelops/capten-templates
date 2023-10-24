@@ -3,37 +3,18 @@ Repo to manage Capten Stack Templates.
 
 # capten-templates
 
+# capten-templates
+
 * [apps/](./capten-templates/apps)
-* [argocd/](./capten-templates/argocd)
-  * [apps/](./capten-templates/argocd/apps) --> sub apps folder which are managed by the main app
-    * [clusters/](./capten-templates/argocd/apps/clusters)
-      * [charts/](./capten-templates/argocd/apps/clusters/charts)
-      * [templates/](./capten-templates/argocd/apps/clusters/templates)
-        * [cluster-configs/](./capten-templates/argocd/apps/clusters/templates/cluster-configs)
-        * [dev/](./capten-templates/argocd/apps/clusters/templates/dev)
-        * [prod/](./capten-templates/argocd/apps/clusters/templates/prod)
-      * [Chart.yaml](./capten-templates/argocd/apps/clusters/Chart.yaml)
-      * [values.yaml](./capten-templates/argocd/apps/clusters/values.yaml)
-    * [crossplane/](./capten-templates/argocd/apps/crossplane)
-      * [charts/](./capten-templates/argocd/apps/crossplane/charts)
-      * [templates/](./capten-templates/argocd/apps/crossplane/templates)
-        * [provider-configs/](./capten-templates/argocd/apps/crossplane/templates/provider-configs) 
-      * [.helmignore](./capten-templates/argocd/apps/crossplane/.helmignore)
-      * [Chart.yaml](./capten-templates/argocd/apps/crossplane/Chart.yaml)
-      * [values.yaml](./capten-templates/argocd/apps/crossplane/values.yaml)
-    * [tekton/](./capten-templates/argocd/apps/tekton)
-      * [charts/](./capten-templates/argocd/apps/tekton/charts)
-      * [templates/](./capten-templates/argocd/apps/tekton/templates)
-        * [configs/](./capten-templates/argocd/apps/tekton/templates/configs)
-        * [pipelines/](./capten-templates/argocd/apps/tekton/templates/pipelines)
-      * [Chart.yaml](./capten-templates/argocd/apps/tekton/Chart.yaml)
-      * [values.yaml](./capten-templates/argocd/apps/tekton/values.yaml)
-  * [main-apps/](./capten-templates/argocd/main-apps) --> This is the main apps folder which needs to be managed manually
-    * [clusters-main-app.yaml](./capten-templates/argocd/main-apps/clusters-main-app.yaml) --> polls apps/clusters  folder
-    * [crossplane-main-app.yaml](./capten-templates/argocd/main-apps/crossplane-main-app.yaml) --> polls apps/crossplane folder
-    * [tekton-main-app.yaml](./capten-templates/argocd/main-apps/tekton-main-app.yaml) --> polls apps/tekton folder
 * [cicd/](./capten-templates/cicd)
   * [tekton/](./capten-templates/cicd/tekton)
+    * [argocd-apps/](./capten-templates/cicd/tekton/argocd-apps)
+      * [charts/](./capten-templates/cicd/tekton/argocd-apps/charts)
+      * [templates/](./capten-templates/cicd/tekton/argocd-apps/templates)
+        * [configs/](./capten-templates/cicd/tekton/argocd-apps/templates/configs)
+        * [pipelines/](./capten-templates/cicd/tekton/argocd-apps/templates/pipelines)
+      * [Chart.yaml](./capten-templates/cicd/tekton/argocd-apps/Chart.yaml)
+      * [values.yaml](./capten-templates/cicd/tekton/argocd-apps/values.yaml)
     * [tekton-pipelines/](./capten-templates/cicd/tekton/tekton-pipelines)
       * [terraform/](./capten-templates/cicd/tekton/tekton-pipelines/terraform)
         * [pipeline.yaml](./capten-templates/cicd/tekton/tekton-pipelines/terraform/pipeline.yaml)
@@ -41,14 +22,29 @@ Repo to manage Capten Stack Templates.
         * [task.yaml](./capten-templates/cicd/tekton/tekton-pipelines/terraform/task.yaml)
     * [tekton-source/](./capten-templates/cicd/tekton/tekton-source)
       * [chart.yaml](./capten-templates/cicd/tekton/tekton-source/chart.yaml)
+    * [tekton-main-app.yaml](./capten-templates/cicd/tekton/tekton-main-app.yaml)
 * [infra/](./capten-templates/infra)
+  * [clusters/](./capten-templates/infra/clusters)
+    * [argocd-apps/](./capten-templates/infra/clusters/argocd-apps)
+      * [charts/](./capten-templates/infra/clusters/argocd-apps/charts)
+      * [templates/](./capten-templates/infra/clusters/argocd-apps/templates)
+        * [cluster-configs/](./capten-templates/infra/clusters/argocd-apps/templates/cluster-configs)
+        * [dev/](./capten-templates/infra/clusters/argocd-apps/templates/dev)
+        * [prod/](./capten-templates/infra/clusters/argocd-apps/templates/prod)
+      * [Chart.yaml](./capten-templates/infra/clusters/argocd-apps/Chart.yaml)
+      * [values.yaml](./capten-templates/infra/clusters/argocd-apps/values.yaml)
+    * [dev/](./capten-templates/infra/clusters/dev)
+      * [dev-eks.yaml](./capten-templates/infra/clusters/dev/dev-eks.yaml)
+    * [prod/](./capten-templates/infra/clusters/prod)
+    * [clusters-main-app.yaml](./capten-templates/infra/clusters/clusters-main-app.yaml)
   * [crossplane/](./capten-templates/infra/crossplane)
-    * [clusters/](./capten-templates/infra/crossplane/clusters) --> Folder for creating/managing all the clusters
-      * [dev/](./capten-templates/infra/crossplane/clusters/dev) --> Cluster specific folder for managing individual clusters
-        * [default-apps] --> for managing default apps
-        * [apps] --> for managing customer apps
-        * [cluster-manifests] --> For managing cluster related yamls
-      * [prod/](./capten-templates/infra/crossplane/clusters/prod)
+    * [argocd-apps/](./capten-templates/infra/crossplane/argocd-apps)
+      * [charts/](./capten-templates/infra/crossplane/argocd-apps/charts)
+      * [templates/](./capten-templates/infra/crossplane/argocd-apps/templates)
+        * [provider-configs/](./capten-templates/infra/crossplane/argocd-apps/templates/provider-configs)
+      * [.helmignore](./capten-templates/infra/crossplane/argocd-apps/.helmignore)
+      * [Chart.yaml](./capten-templates/infra/crossplane/argocd-apps/Chart.yaml)
+      * [values.yaml](./capten-templates/infra/crossplane/argocd-apps/values.yaml)
     * [crossplane-config/](./capten-templates/infra/crossplane/crossplane-config)
       * [provider.yaml](./capten-templates/infra/crossplane/crossplane-config/provider.yaml)
       * [providerconfig.yaml](./capten-templates/infra/crossplane/crossplane-config/providerconfig.yaml)
@@ -59,4 +55,5 @@ Repo to manage Capten Stack Templates.
     * [providers/](./capten-templates/infra/crossplane/providers)
       * [chart.yaml](./capten-templates/infra/crossplane/providers/chart.yaml)
     * [README.md](./capten-templates/infra/crossplane/README.md)
+    * [crossplane-main-app.yaml](./capten-templates/infra/crossplane/crossplane-main-app.yaml)
 * [README.md](./capten-templates/README.md)
