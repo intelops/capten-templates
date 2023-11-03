@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "client.fullname" . }}
+  labels:
+    {{- include "client.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "client.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "client.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "client.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: migration-init
+          image: "{{ .Values.migration.image.repository }}:{{ .Values.migration.image.tag }}"
+          imagePullPolicy: {{ .Values.migration.image.pullPolicy }}
+          command:
+          - /bin/sh
+          - -c
+          args:
+          - "/script/wait-for-clickhouse.sh && /migration sql -e --yes"
+          env:
+          - name: SCHEMA_PATH
+            value : {{ .Values.migration.schema.path }}
+          - name: DB_ADDRESS
+            value: {{ include "client.fullname" . }}-clickhouse
+          - name: DB_PORT
+            value: "9000"
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+#          livenessProbe:
+#            httpGet:
+#              path: /
+#              port: http
+#          readinessProbe:
+#            httpGet:
+#              path: /
+#              port: http
+          env:
+          - name: NATS_TOKEN
+            {{- if and .Values.nats.enabled .Values.nats.auth.enabled .Values.nats.auth.token }}
+            value: {{ .Values.nats.auth.token }}
+            {{- else if and .Values.nats.enabled .Values.nats.auth.enabled .Values.nats.auth.secret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.nats.auth.secret.name }}
+                key: {{ .Values.nats.auth.secret.key }}
+            {{- end }}
+          - name: NATS_ADDRESS
+            value: {{ include "client.fullname" . }}-nats
+          - name: DB_ADDRESS
+            value: {{ include "client.fullname" . }}-clickhouse
+          - name: DB_PORT
+            value: "9000"
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
