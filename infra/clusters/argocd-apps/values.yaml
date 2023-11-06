@@ -1,0 +1,26 @@
+project: default
+
+source:
+  repoURL: https://github.com/intelops/capten-templates.git
+  targetRevision: main
+  
+destination:
+  server: https://kubernetes.default.svc
+  namespace: crossplane
+
+clusters:
+  - name: crossplane-aws-dev-cluster 
+    path: infra/crossplane/packages/k8s   
+  - name: crossplane-azure-dev-cluster
+    path: infra/crossplane/packages/k8s
+  - name: crossplane-gcp-dev-cluster
+    path: infra/crossplane/packages/k8s
+
+dev:
+  - name: crossplane-aws-dev-cluster 
+    path: infra/crossplane/clusters/dev
+  - name: crossplane-azure-dev-cluster
+    path: infra/crossplane/clusters/dev
+  - name: crossplane-gcp-dev-cluster
+    path: infra/crossplane/clusters/dev
+   
