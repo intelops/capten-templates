@@ -1,0 +1,20 @@
+Tekton Prerequisites
+
+  1.Create the necessary secrets and rbac to enforce permissions and access rights to resources, systems, and data.
+
+  2.Apply the tasks that contains the steps of actions that needs to be performed one by one.
+  
+  3.Apply the pipeline which contains the reference to each task (apply github/gitlab/both pipeline according to your need).
+
+  4.Apply the trigger that contains the eventlistner,triggerbinding and triggertemplate. 
+
+  5.Finally ,apply the ingress to expose the eventlistener outside so that when a events occurs in the github/gitlab will reach the eventlistener via webhook.
+
+
+If the user wants to use different registry to store the image do the following steps
+
+  1.Change the "IMAGE" field under triggerbinding in the eventlistener.
+
+  2.Create the secret for the registry.
+ 
+  3.Give the secretname of the newly created secret under the resourcetemplates->workspaces->secret in triggertemplate.
