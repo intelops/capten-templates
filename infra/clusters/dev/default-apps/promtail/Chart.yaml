@@ -1,0 +1,9 @@
+apiVersion: v2
+version: 1.0.0
+appVersion: 2.9.2
+name: promtail
+description: promtail Helm chart for Kubernetes
+dependencies:
+  - name: promtail
+    version: 1.0.0
+    repository: https://kube-tarian.github.io/helmrepo-supporting-tools
