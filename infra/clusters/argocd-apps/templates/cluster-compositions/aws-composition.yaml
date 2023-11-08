@@ -2,13 +2,13 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: crossplane-aws-dev-cluster
-  namespace: argo-cd
+  namespace: argocd
 spec:
   project: default
   source:
     repoURL: https://github.com/intelops/capten-templates.git
     targetRevision: main
-    path: infra/crossplane/crossplane-config
+    path: infra/clusters/compositions/aws
   destination:
     server: https://kubernetes.default.svc
     namespace: crossplane
