@@ -14,5 +14,11 @@ spec:
   destination:
     server: {{ $.Values.destination.server }}
     namespace: {{ $.Values.destination.namespace }}
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace={{ $.Values.syncPolicy.syncOptions.CreateNamespace }}
+    automated:
+      prune: {{ $.Values.syncPolicy.automated.prune }}
+      selfHeal: {{ $.Values.syncPolicy.automated.selfHeal }}
 {{- end }}
 {{- end }}

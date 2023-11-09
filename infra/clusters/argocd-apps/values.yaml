@@ -8,6 +8,14 @@ destination:
   server: https://kubernetes.default.svc
   namespace: crossplane
 
+syncPolicy:
+  syncOptions:
+    CreateNamespace: true
+  automated:
+    prune: true
+    selfHeal: true
+
+
 clusters:
   - name: crossplane-aws-dev-cluster 
     path: infra/crossplane/packages/k8s   
