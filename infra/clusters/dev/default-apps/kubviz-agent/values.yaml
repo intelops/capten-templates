@@ -1,0 +1,5 @@
+nats:
+  auth:
+    secret:
+      name: "kubviz-nats-token"
+      key: "nats-token"
