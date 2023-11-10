@@ -1,5 +1,6 @@
 nats:
+  host: kubviz-client
   auth:
     secret:
-      name: "kubviz-nats-token"
-      key: "nats-token"
+      name: "kubviz-nats-secret-name"
+      key: "token"
