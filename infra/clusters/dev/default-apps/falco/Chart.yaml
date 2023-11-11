@@ -1,0 +1,9 @@
+apiVersion: v2
+version: 0.0.1
+appVersion:  0.35.1
+name: falco
+description: falco Helm chart for Kubernetes
+dependencies:
+  - name: falco
+    version: 0.0.1
+    repository: https://kube-tarian.github.io/helmrepo-supporting-tools
