@@ -19,7 +19,7 @@ spec:
     #   type: string
   steps:
     - name: cosign-sign
-      image: pradeepgoru/cosign:2.1.1 
+      image: ghcr.io/kube-tarian/helmrepo-supporting-tools/cosign:2.1.1
       script: |
         mkdir -p ~/.docker/
         export registry=`cat /workspace/dockerconfig/registry`
