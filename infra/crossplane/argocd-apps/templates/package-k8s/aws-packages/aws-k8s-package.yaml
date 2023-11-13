@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/intelops/capten-templates.git
     targetRevision: main
-    path: infra/crossplane/packages/k8s/aws
+    path: infra/crossplane/packages-def/k8s/aws
   destination:
     server: https://kubernetes.default.svc
     namespace: crossplane
