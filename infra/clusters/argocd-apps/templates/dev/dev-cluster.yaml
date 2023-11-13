@@ -8,7 +8,10 @@ spec:
   source:
     repoURL: https://github.com/intelops/capten-templates.git
     targetRevision: main
-    path: infra/crossplane/clusters/dev
+    path: infra/crossplane/clusters/dev/clusterconfigs
   destination:
     server: https://kubernetes.default.svc
     namespace: crossplane
+  syncPolicy:
+    automated:
+      prune: true
