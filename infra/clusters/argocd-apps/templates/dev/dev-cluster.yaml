@@ -1,28 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: default-apps
-  namespace: argocd
+  name: crossplane-aws-dev-cluster
+  namespace: argo-cd
 spec:
-  destination:
-    name: ''
-    namespace: observability
-    server: 'https://kubernetes.default.svc'
-  sources:
-  - repoURL: 'https://github.com/kube-tarian/helmrepo-supporting-tools.git'
-    targetRevision: main
-    chart: tools
-    helm:
-      valueFiles: 
-      - values.yaml
-      - $values/capten-templates/infra/clusters/dev/default-apps/
-  - repoURL: 'https://github.com/intelops/capten-templates.git'
-    targetRevision: main
-    ref: values
   project: default
+  source:
+    repoURL: https://github.com/intelops/capten-templates.git
+    targetRevision: main
+    path: infra/crossplane/clusters/dev/clusterconfigs
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: crossplane
   syncPolicy:
-    syncOptions:
-      - CreateNamespace=true
     automated:
       prune: true
-      selfHeal: true

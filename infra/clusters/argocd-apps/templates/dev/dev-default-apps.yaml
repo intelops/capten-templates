@@ -2,13 +2,27 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: default-apps
-  namespace: argo-cd
+  namespace: argocd
 spec:
-  project: default
-  source:
-    repoURL: https://github.com/intelops/capten-templates.git
-    targetRevision: main
-    path: apps
   destination:
-    server: https://kubernetes.default.svc
-    namespace: crossplane
+    name: ''
+    namespace: default-apps
+    server: 'https://kubernetes.default.svc'
+  sources:
+  - repoURL: 'https://github.com/kube-tarian/helmrepo-supporting-tools.git'
+    targetRevision: main
+    chart: tools
+    helm:
+      valueFiles: 
+      - values.yaml
+      - $values/capten-templates/infra/clusters/dev/default-apps/
+  - repoURL: 'https://github.com/intelops/capten-templates.git'
+    targetRevision: main
+    ref: values
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: true
+      selfHeal: true
