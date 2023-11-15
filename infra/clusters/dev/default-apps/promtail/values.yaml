@@ -1,0 +1,5 @@
+config:
+  clients:
+  - external_labels:
+      cluster_name: cluster
+    url: http://loki/api/v1/push
