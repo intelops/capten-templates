@@ -1,54 +1,21 @@
-server:
-  remoteWrite: 
-  - url: "https://prometheus.app/api/v1/write"
-server:
-  remoteWrite: 
-  - url: "https://prometheus.app/api/v1/write"
-serverFiles:
-  prometheus.yml:
-    scrape_configs:
-      - job_name: 'kubernetes-apiservers'
-        relabel_configs:
-          - source_labels: []
-            target_label: cluster_name
-            replacement: 'nameofthecluster'
-      - job_name: 'kubernetes-nodes'
-        relabel_configs:
-          - source_labels: []
-            target_label: cluster_name
-            replacement: 'nameofthecluster'
-      - job_name: 'kubernetes-nodes-cadvisor'
-        relabel_configs:
-          - source_labels: []
-            target_label: cluster_name
-            replacement: 'nameofthecluster'
-      - job_name: 'kubernetes-service-endpoints'
-        relabel_configs:
-          - source_labels: []
-            target_label: cluster_name
-            replacement: 'nameofthecluster'
-      - job_name: 'kubernetes-service-endpoints-slow'
-        relabel_configs:
-          - source_labels: []
-            target_label: cluster_name
-            replacement: 'nameofthecluster'
-       - job_name: 'prometheus-pushgateway'
-         relabel_configs:
-          - source_labels: []
-            target_label: cluster_name
-            replacement: 'nameofthecluster'
-       - job_name: 'kubernetes-services'
-         relabel_configs:
-          - source_labels: []
-            target_label: cluster_name
-            replacement: 'nameofthecluster'
-       - job_name: 'kubernetes-pods'
-         relabel_configs:
-          - source_labels: []
-            target_label: cluster_name
-            replacement: 'nameofthecluster'
-       - job_name: 'kubernetes-pods-slow'
-         relabel_configs:
-          - source_labels: []
-            target_label: cluster_name
-            replacement: 'nameofthecluster'
+prometheus:
+  prometheusSpec:
+     externalLabels: 
+      cluster_name: clustername
+     enableRemoteWriteReceiver: true
+     externalUrl: "https://prometheus.app/api/v1/write"
+
+alertmanager:
+  enabled: false
+  
+grafana:
+  enabled: false
+  
+kubeStateMetrics:
+  enabled: false
+  
+nodeExporter:
+  enabled: false
+  
+  
+
