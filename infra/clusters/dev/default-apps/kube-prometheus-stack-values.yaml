@@ -1,10 +1,10 @@
 prometheus:
   prometheusSpec:
-     externalLabels: 
+    externalLabels: 
       cluster_name: clustername
-     enableRemoteWriteReceiver: true
-     remoteWrite: 
-     - url: https://prometheus.azureagent.optimizor.app/api/v1/push
+    enableRemoteWriteReceiver: true
+    remoteWrite: 
+    - url: https://prometheus.azureagent.optimizor.app/api/v1/push
 
 alertmanager:
   enabled: false
