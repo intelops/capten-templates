@@ -1,4 +1,4 @@
-{{- with .Values.clusters }}
+{{- with .Values.compositions }}
 {{- range . }}
 apiVersion: argoproj.io/v1alpha1
 kind: Application

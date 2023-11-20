@@ -3,7 +3,7 @@ kind: ClusterClaim
 metadata:
   labels:
     cluster-owner: cem
-  name: dev-eks
+  name: prod-cluster-claim
 spec:
   compositeDeletePolicy: Background
   compositionRef:

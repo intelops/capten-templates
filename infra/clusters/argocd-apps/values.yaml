@@ -9,12 +9,12 @@ destination:
   namespace: crossplane
 
 syncPolicy:
+  CreateNamespace: true
   automated:
     prune: true
     selfHeal: true
 
-
-clusters:
+compositions:
   - name: crossplane-aws-dev-k8s-packages
     path: infra/clusters/compositions/aws  
   - name: crossplane-azure-dev-k8s-packages
@@ -22,11 +22,36 @@ clusters:
   - name: crossplane-gcp-dev-k8s-packages
     path: infra/clusters/compositions/gcp
 
-dev:
-  - name: crossplane-aws-dev-cluster 
-    path: infra/crossplane/clusters/dev/clusterconfigs
-  - name: crossplane-azure-dev-cluster
-    path: infra/crossplane/clusters/dev/clusterconfigs
-  - name: crossplane-gcp-dev-cluster
-    path: infra/crossplane/clusters/dev/clusterconfigs
+clusters:
+  - name: dev
+    configPath: infra/clusters/dev/cluster-configs
+  - name: prod
+    configPath: infra/clusters/prod/clusterconfigs
+  - name: test
+    configPath: infra/clusters/test/clusterconfigs
    
+defaultApps:
+  - name: falco
+    appConfigPath: infra/clusters/dev/app-configs/default-apps/falco-values.yaml
+    repoURL: 'https://github.com/kube-tarian/helmrepo-supporting-tools.git'
+    namespace: falco
+    chart: tools
+    targetRevision: main
+  - name: kyverno
+    appConfigPath: infra/clusters/dev/app-configs/default-apps/kyverno-values.yaml
+    repoURL: 'https://github.com/kube-tarian/helmrepo-supporting-tools.git'
+    namespace: kyverno
+    chart: tools
+    targetRevision: main
+  - name: prometheus
+    appConfigPath: infra/clusters/dev/app-configs/default-apps/prometheus-values.yaml
+    repoURL: 'https://github.com/kube-tarian/helmrepo-supporting-tools.git'
+    namespace: prometheus
+    chart: tools
+    targetRevision: main
+  - name: promtail
+    appConfigPath: infra/clusters/dev/app-configs/default-apps/promtail-values.yaml
+    repoURL: 'https://github.com/kube-tarian/helmrepo-supporting-tools.git'
+    namespace: promtail
+    chart: tools
+    targetRevision: main
