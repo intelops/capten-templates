@@ -1,0 +1,19 @@
+prometheus:
+  prometheusSpec:
+    externalLabels: 
+      cluster_name: clustername
+    enableRemoteWriteReceiver: true
+    remoteWrite: 
+    - url: https://prometheus.azureagent.optimizor.app/api/v1/push
+
+alertmanager:
+  enabled: false
+
+grafana:
+  enabled: false
+
+kubeStateMetrics:
+  enabled: false
+
+nodeExporter:
+  enabled: false

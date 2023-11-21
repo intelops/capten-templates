@@ -1,0 +1,32 @@
+{{- range .Values.clusters }}
+{{- $cluster := . }}
+{{- range .defaultApps }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Release.Namespace }}
+spec:
+  destination:
+    name: ''
+    namespace: {{ .namespace }}
+    server: '{{ $cluster.server }}'
+  sources:
+  - repoURL: '{{ .repoURL }}'
+    targetRevision: {{ .targetRevision }}
+    chart: {{ .chart }}
+    helm:
+      valueFiles: 
+      - values.yaml
+      - $values/{{ .appConfigPath }}
+  - repoURL: '{{ $.Values.source.repoURL }}'
+    targetRevision: {{ $.Values.source.targetRevision }}
+    ref: values
+  project: {{ $.Values.project }}
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace={{ $.Values.syncPolicy.CreateNamespace }}
+    automated:
+      prune: {{ $.Values.syncPolicy.automated.prune }}
+{{- end }}
+{{- end }}

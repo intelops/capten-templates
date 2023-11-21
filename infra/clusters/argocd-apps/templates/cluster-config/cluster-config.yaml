@@ -1,4 +1,4 @@
-{{- with .Values.compositions }}
+{{- with .Values.clusters }}
 {{- range . }}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: {{ $.Values.source.repoURL }}
     targetRevision: {{ $.Values.source.targetRevision }}
-    path: {{ .path}}
+    path: {{ .configPath }}
   destination:
     server: {{ $.Values.destination.server }}
     namespace: {{ $.Values.destination.namespace }}
