@@ -29,25 +29,25 @@ clusters:
     defaultApps:
     - name: dev-falco
       appConfigPath: infra/clusters/dev/app-configs/default-apps/falco-values.yaml
-      repoURL: 'https://github.com/kube-tarian/helmrepo-supporting-tools.git'
+      repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'
       namespace: falco
       chart: falco
       targetRevision: "0.0.1"
     - name: dev-kyverno
       appConfigPath: infra/clusters/dev/app-configs/default-apps/kyverno-values.yaml
-      repoURL: 'https://github.com/kube-tarian/helmrepo-supporting-tools.git'
+      repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'
       namespace: kyverno
       chart: kyverno
       targetRevision: "1.0.2"
     - name: dev-prometheus
       appConfigPath: infra/clusters/dev/app-configs/default-apps/prometheus-values.yaml
-      repoURL: 'https://github.com/kube-tarian/helmrepo-supporting-tools.git'
+      repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'
       namespace: prometheus
       chart: kube-prometheus-stack
       targetRevision: "1.0.3"
     - name: dev-promtail
       appConfigPath: infra/clusters/dev/app-configs/default-apps/promtail-values.yaml
-      repoURL: 'https://github.com/kube-tarian/helmrepo-supporting-tools.git'
+      repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'
       namespace: promtail
       chart: promtail
       targetRevision: "1.0.0"
@@ -58,25 +58,25 @@ clusters:
     defaultApps:
     - name: prod-falco
       appConfigPath: infra/clusters/prod/app-configs/default-apps/falco-values.yaml
-      repoURL: 'https://github.com/kube-tarian/helmrepo-supporting-tools.git'
+      repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'
       namespace: falco
       chart: falco
       targetRevision: "0.0.1"
     - name: prod-kyverno
       appConfigPath: infra/clusters/prod/app-configs/default-apps/kyverno-values.yaml
-      repoURL: 'https://github.com/kube-tarian/helmrepo-supporting-tools.git'
+      repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'
       namespace: kyverno
       chart: kyverno
       targetRevision: "1.0.2"
     - name: prod-prometheus
       appConfigPath: infra/clusters/prod/app-configs/default-apps/prometheus-values.yaml
-      repoURL: 'https://github.com/kube-tarian/helmrepo-supporting-tools.git'
+      repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'
       namespace: prometheus
       chart: kube-prometheus-stack
       targetRevision: "1.0.3"
     - name: prod-promtail
       appConfigPath: infra/clusters/prod/app-configs/default-apps/promtail-values.yaml
-      repoURL: 'https://github.com/kube-tarian/helmrepo-supporting-tools.git'
+      repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'
       namespace: promtail
       chart: promtail
       targetRevision: "1.0.0"
