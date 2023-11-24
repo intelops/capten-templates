@@ -3,7 +3,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .name }}
+  name: {{ .name }}-cluster
   namespace: {{ $.Release.Namespace }}
 spec:
   project: {{ $.Values.project }}

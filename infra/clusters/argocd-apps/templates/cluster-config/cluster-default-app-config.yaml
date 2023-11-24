@@ -9,7 +9,7 @@ metadata:
 spec:
   destination:
     name: ''
-    namespace: {{ .namespace }}
+    namespace: {{ $cluster.name }}-{{ .namespace }}
     server: '{{ $cluster.server }}'
   sources:
   - repoURL: '{{ .repoURL }}'
@@ -17,7 +17,6 @@ spec:
     chart: {{ .chart }}
     helm:
       valueFiles: 
-      - values.yaml
       - $values/{{ .appConfigPath }}
   - repoURL: '{{ $.Values.source.repoURL }}'
     targetRevision: {{ $.Values.source.targetRevision }}
