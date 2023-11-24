@@ -1,9 +1,0 @@
-apiVersion: v2
-version: 1.0.2
-appVersion:  v1.10.1
-name: kyverno
-description: kyverno Helm chart for Kubernetes
-dependencies:
-  - name: kyverno
-    version: 1.0.2
-    repository: https://kube-tarian.github.io/helmrepo-supporting-tools
