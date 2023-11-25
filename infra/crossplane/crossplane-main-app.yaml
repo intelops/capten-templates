@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/intelops/capten-templates.git
+    repoURL: https://github.com/indresh-28/test-tekton.git
     targetRevision: main
     path: infra/crossplane/argocd-apps
     helm:
