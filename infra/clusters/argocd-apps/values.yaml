@@ -26,7 +26,6 @@ clusters:
     repoURL: https://kube-tarian.github.io/helmrepo-supporting-tools
     targetRevision: 1.0.0
   name: dev-aws
-  server: https://kubernetes.default.svc
 compositions:
 - name: crossplane-aws-dev-k8s-packages
   path: infra/clusters/compositions/aws
