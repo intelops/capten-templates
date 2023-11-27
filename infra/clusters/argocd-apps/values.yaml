@@ -1,0 +1,49 @@
+project: default
+
+source:
+  repoURL: https://github.com/intelops/capten-templates.git
+  targetRevision: main
+  
+destination:
+  server: https://kubernetes.default.svc
+  namespace: crossplane
+
+syncPolicy:
+  CreateNamespace: true
+  automated:
+    prune: true
+    selfHeal: true
+
+compositions:
+  - name: crossplane-aws-dev-k8s-packages
+    path: infra/clusters/compositions/aws  
+
+clusters:
+  - name: dev-aws
+    configPath: infra/clusters/dev/cluster-configs
+    server: https://kubernetes.default.svc
+    defaultApps:
+    - name: falco
+      appConfigPath: infra/clusters/dev-aws/app-configs/default-apps/falco-values.yaml
+      repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'
+      namespace: falco
+      chart: falco
+      targetRevision: "0.0.1"
+    - name: kyverno
+      appConfigPath: infra/clusters/dev-aws/app-configs/default-apps/kyverno-values.yaml
+      repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'
+      namespace: kyverno
+      chart: kyverno
+      targetRevision: "1.0.2"
+    - name: prometheus
+      appConfigPath: infra/clusters/dev-aws/app-configs/default-apps/prometheus-values.yaml
+      repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'
+      namespace: prometheus
+      chart: kube-prometheus-stack
+      targetRevision: "1.0.3"
+    - name: promtail
+      appConfigPath: infra/clusters/dev-aws/app-configs/default-apps/promtail-values.yaml
+      repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'
+      namespace: promtail
+      chart: promtail
+      targetRevision: "1.0.0"
