@@ -1,0 +1,19 @@
+project: default
+
+source:
+  repoURL: https://github.com/intelops/capten-templates.git
+  targetRevision: main
+  
+destination:
+  server: https://kubernetes.default.svc
+  namespace: tekton
+
+syncPolicy:
+  CreateNamespace: true
+  automated:
+    prune: false
+    selfHeal: true
+
+tektonPipelines:
+  - name: tekton-pipeline-dev-cluster
+    path: cicd/tekton-pipelines/tekton-yamls

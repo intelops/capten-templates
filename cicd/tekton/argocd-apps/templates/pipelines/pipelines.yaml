@@ -1,14 +1,23 @@
+{{- with .Values.tektonPipelines }}
+{{- range . }}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: tekton-pipeline-dev-cluster
-  namespace: argo-cd
+  name: {{ .name }}
+  namespace: {{ $.Release.Namespace }}
 spec:
-  project: default
+  project: {{ $.Values.project }}
   source:
-    repoURL: https://github.com/intelops/capten-templates.git
-    targetRevision: main
-    path: tekton/tekton-pipelines/tekton-yamls
+    repoURL: {{ $.Values.source.repoURL }}
+    targetRevision: {{ $.Values.source.targetRevision }}
+    path: {{ .path}}
   destination:
-    server: https://kubernetes.default.svc
-    namespace: tek
+    server: {{ $.Values.destination.server }}
+    namespace: {{ $.Values.destination.namespace }}
+  syncPolicy:
+    automated:
+      prune: {{ $.Values.syncPolicy.automated.prune }}
+      selfHeal: {{ $.Values.syncPolicy.automated.selfHeal }}
+--- 
+{{- end }}
+{{- end }}
