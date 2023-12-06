@@ -1,7 +1,7 @@
 # capten-templates
 Repo to manage Capten Stack Templates.
 
-# capten-templates
+# capten-templates.
 
 # capten-templatesss
 
