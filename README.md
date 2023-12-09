@@ -3,7 +3,7 @@ Repo to manage Capten Stack Templates.
 
 # capten-templatesss
 
-* [apps/](./capten-templates/apps)
+* [apps/](./capten-templates/apps)\
 * [cicd/](./capten-templates/cicd)
   * [tekton/](./capten-templates/cicd/tekton)
     * [argocd-apps/](./capten-templates/cicd/tekton/argocd-apps)
