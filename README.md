@@ -1,8 +1,6 @@
 # capten-templates
 Repo to manage Capten Stack Templates.
 
-# capten-templates.
-
 # capten-templatesss
 
 * [apps/](./capten-templates/apps)
