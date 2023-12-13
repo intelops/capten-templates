@@ -1,14 +1,23 @@
+{{- with .Values.compositions }}
+{{- range . }}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: crossplane-aws-dev-k8s-packages
-  namespace: argocd
+  name: {{ .name }}
+  namespace: {{ $.Release.Namespace }}
 spec:
-  project: default
+  project: {{ $.Values.project }}
   source:
-    repoURL: https://github.com/intelops/capten-templates.git
-    targetRevision: main
-    path: infra/clusters/compositions/aws
+    repoURL: {{ $.Values.source.repoURL }}
+    targetRevision: {{ $.Values.source.targetRevision }}
+    path: {{ .path}}
   destination:
-    server: https://kubernetes.default.svc
-    namespace: crossplane
+    server: {{ $.Values.destination.server }}
+    namespace: {{ $.Values.destination.namespace }}
+  syncPolicy:
+    automated:
+      prune: {{ $.Values.syncPolicy.automated.prune }}
+      
+--- 
+{{- end }}
+{{- end }}

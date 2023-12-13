@@ -1,23 +1,23 @@
-{{- with .Values.tektonPipelines }}
+{{- with .Values.clusters }}
 {{- range . }}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .name }}
+  name: {{ .name }}-cluster
   namespace: {{ $.Release.Namespace }}
 spec:
   project: {{ $.Values.project }}
   source:
     repoURL: {{ $.Values.source.repoURL }}
     targetRevision: {{ $.Values.source.targetRevision }}
-    path: {{ .path}}
+    path: {{ .configPath }}
   destination:
     server: {{ $.Values.destination.server }}
     namespace: {{ $.Values.destination.namespace }}
   syncPolicy:
     automated:
       prune: {{ $.Values.syncPolicy.automated.prune }}
-      selfHeal: {{ $.Values.syncPolicy.automated.selfHeal }}
---- 
+
+---
 {{- end }}
 {{- end }}
