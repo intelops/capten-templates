@@ -1,10 +1,11 @@
 prometheus:
   prometheusSpec:
     externalLabels: 
-      cluster_name: clustername
+      cluster_name: dev-upgrade
     enableRemoteWriteReceiver: true
+    externalUrl: "https://prometheus.azureagent.optimizor.app/"
     remoteWrite: 
-    - url: https://prometheus.azureagent.optimizor.app/api/v1/push
+    - url: https://prometheus.azureagent.optimizor.app/api/v1/write
 
 alertmanager:
   enabled: false
@@ -13,7 +14,7 @@ grafana:
   enabled: false
 
 kubeStateMetrics:
-  enabled: false
+  enabled: true
 
 nodeExporter:
   enabled: false

@@ -3,7 +3,7 @@ kind: ClusterClaim
 metadata:
   labels:
     cluster-owner: cem
-  name: dev-eks
+  name: dev-first
 spec:
   compositeDeletePolicy: Background
   compositionRef:
@@ -13,7 +13,7 @@ spec:
       cluster: eks
       provider: aws
   compositionUpdatePolicy: Automatic
-  id: dev-eks
+  id: dev-first
   parameters:
     minNodeCount: 3
     nodeSize: small

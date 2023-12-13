@@ -16,8 +16,8 @@ spec:
     namespace: {{ $.Values.destination.namespace }}
   syncPolicy:
     automated:
-      prune: {{ $.Values.syncPolicy.automated.prune }}
-      
---- 
+      prune: false
+      selfHeal: {{ $.Values.syncPolicy.automated.selfHeal }}
+---
 {{- end }}
 {{- end }}
