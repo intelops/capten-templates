@@ -1,0 +1,20 @@
+prometheus:
+  prometheusSpec:
+    externalLabels: 
+      cluster_name: {{.ClusterName}}
+    enableRemoteWriteReceiver: true
+    externalUrl: "https://prometheus.{{.DomainName}}/"
+    remoteWrite: 
+    - url: https://prometheus.{{.DomainName}}/api/v1/write
+
+alertmanager:
+  enabled: false
+
+grafana:
+  enabled: false
+
+kubeStateMetrics:
+  enabled: true
+
+nodeExporter:
+  enabled: true
