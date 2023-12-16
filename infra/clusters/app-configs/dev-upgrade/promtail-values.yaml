@@ -1,5 +1,0 @@
-config:
-  clients:
-  - external_labels:
-      cluster_name: dev-upgrade
-    url: http://loki.azureagent.optimizor.app/loki/api/v1/push

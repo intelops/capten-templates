@@ -4,7 +4,7 @@ global:
   clusterConfigPath: infra/clusters/cluster-configs
 
 source:
-  repoURL: https://github.com/vramk23/infratest2.git
+  repoURL: https://github.com/vramk23/infrapub.git
   targetRevision: main
   
 destination:

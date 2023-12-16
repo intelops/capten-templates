@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/vramk23/infratest2.git
+    repoURL: https://github.com/vramk23/infrapub.git
     targetRevision: main
     path: infra/crossplane/providers
   destination:
