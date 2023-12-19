@@ -1,6 +1,6 @@
 clusterName: {{.ClusterName}}
 nats:
-  host: 20.198.70.165
+  host: {{.NatsHost}}
   auth:
     secret:
       name: "secret-new"

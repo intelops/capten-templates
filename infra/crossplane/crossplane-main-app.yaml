@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/vramk23/infrapub.git
+    repoURL: https://github.com/intelops/capten-templates.git
     targetRevision: main
     path: infra/crossplane/argocd-apps
     helm:
