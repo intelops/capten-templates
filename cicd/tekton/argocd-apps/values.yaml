@@ -7,4 +7,3 @@ source:
 tektonPath: cicd/tekton-pipelines
 tektonPipelines:
 - name: test-tekton
-- name: test
