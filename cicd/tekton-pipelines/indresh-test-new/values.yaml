@@ -1,8 +1,0 @@
-ingressDomainName: test-tekton.azureagent.optimizor.app
-namespace: argo-cd
-pipelineName: indresh-test-new
-secretName:
-- name: gitcred-indresh-test-new
-- name: docker-credentials-indresh-test-new
-- name: github-webhook-secret-indresh-test-new
-tektonDashboard: indresh-test-new

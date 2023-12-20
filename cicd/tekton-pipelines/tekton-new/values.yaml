@@ -1,8 +1,0 @@
-ingressDomainName: test
-namespace: argo-cd
-pipelineName: tekton-new
-secretName:
-- name: gitcred-tekton-new
-- name: docker-credentials-tekton-new
-- name: github-webhook-secret-tekton-new
-tektonDashboard: tekton-new
