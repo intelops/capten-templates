@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: tekton-apps
+  namespace: argo-cd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/indresh-28/test-tekton
+    targetRevision: main
+    path: cicd/tekton-pipelines/cluster-config
+    helm:
+      valueFiles:
+      - values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argo-cd
