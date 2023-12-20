@@ -1,0 +1,33 @@
+apiVersion: tekton.dev/v1beta1
+kind: ClusterTask
+metadata:
+  name: cosign-image-verify
+spec:
+  description: Cosign sign an image
+  params:
+  - description: The image to be signed by cosign.
+    name: image
+    type: string
+  steps:
+  - image: ghcr.io/kube-tarian/helmrepo-supporting-tools/cosign:2.1.1
+    name: cosign-sign
+    resources: {}
+    script: |
+      mkdir -p ~/.docker/
+      export registry=`cat /workspace/dockerconfig/registry`
+      export username=`cat /workspace/dockerconfig/username`
+      export password=`cat /workspace/dockerconfig/password`
+      cosign login $registry -u $username -p $password
+      export COSIGN_PASSWORD=""
+      cosign verify --key /workspace/cosign/cosign.pub $(params.image)
+    securityContext:
+      privileged: true
+  workspaces:
+  - name: source
+  - description: An optional workspace that allows providing a .docker/config.json
+      file for Buildah to access the container registry. The file should be placed
+      at the root of the Workspace with name config.json.
+    name: dockerconfig
+    optional: true
+  - description: Cosign private key to sign image
+    name: cosign

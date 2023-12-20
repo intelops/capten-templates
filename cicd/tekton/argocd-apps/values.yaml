@@ -1,0 +1,10 @@
+destination:
+  server: https://kubernetes.default.svc
+project: default
+source:
+  repoURL: https://github.com/indresh-28/test-tekton
+  targetRevision: main
+tektonPath: cicd/tekton-pipelines
+tektonPipelines:
+- name: indresh-test-new
+- name: pipeline-template

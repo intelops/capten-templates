@@ -7,8 +7,8 @@ spec:
   project: default
   source:
     repoURL: https://github.com/indresh-28/test-tekton
-    targetRevision: tekton-infra
-    path: cicd/tekton/argocd-apps
+    targetRevision: main
+    path: cicd/tekton-pipelines/cluster-config
     helm:
       valueFiles:
       - values.yaml
