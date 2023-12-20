@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/indresh-28/test-tekton
-    targetRevision: tekton-infra
+    targetRevision: main
     path: cicd/tekton/argocd-apps
     helm:
       valueFiles:
