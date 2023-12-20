@@ -7,4 +7,3 @@ source:
 tektonPath: cicd/tekton-pipelines
 tektonPipelines:
 - name: indresh-test-new-latest-new
-- name: pipeline-template
