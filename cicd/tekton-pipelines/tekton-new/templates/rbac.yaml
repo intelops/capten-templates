@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $.Values.pipelineName }}
+  namespace: {{ $.Values.namespace }}
+secrets:
+{{- with .Values.secretName }}
+{{- range . }}
+- name:  {{ .name}}
+{{- end }}
+{{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $.Values.pipelineName }}
+  namespace: {{ $.Values.namespace }}
+subjects:
+- kind: ServiceAccount
+  name: {{ $.Values.pipelineName }}
+  namespace: {{ $.Values.namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ $.Values.pipelineName }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $.Values.pipelineName }}
+rules:
+- apiGroups: ["triggers.tekton.dev"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch" , "update" , "create"]
+

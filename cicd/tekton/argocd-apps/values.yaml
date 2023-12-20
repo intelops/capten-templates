@@ -6,4 +6,5 @@ source:
   targetRevision: main
 tektonPath: cicd/tekton-pipelines
 tektonPipelines:
+- name: tekton-new
 - name: indresh-test-new-latest-new
