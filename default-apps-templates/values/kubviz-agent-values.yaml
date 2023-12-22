@@ -1,0 +1,7 @@
+clusterName: {{.ClusterName}}
+nats:
+  host: {{.NatsHost}}
+  auth:
+    secret:
+      name: "secret-new"
+      key: "nats-token"

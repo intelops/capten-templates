@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: providers
+  name: crossplane-providers
   namespace: argo-cd
 spec:
   project: default

@@ -1,6 +1,7 @@
 {{- range .Values.clusters }}
 {{- $cluster := . }}
 {{- range .defaultApps }}
+{{- if $cluster.server }}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -9,7 +10,7 @@ metadata:
 spec:
   destination:
     name: ''
-    namespace: {{ $cluster.name }}-{{ .namespace }}
+    namespace: {{ .namespace }}
     server: '{{ $cluster.server }}'
   sources:
   - repoURL: '{{ .repoURL }}'
@@ -17,7 +18,8 @@ spec:
     chart: {{ .chart }}
     helm:
       valueFiles: 
-      - $values/{{ .appConfigPath }}
+      - values.yaml
+      - $values/{{ .valuesPath }}
   - repoURL: '{{ $.Values.source.repoURL }}'
     targetRevision: {{ $.Values.source.targetRevision }}
     ref: values
@@ -27,7 +29,7 @@ spec:
       - CreateNamespace={{ $.Values.syncPolicy.CreateNamespace }}
     automated:
       prune: {{ $.Values.syncPolicy.automated.prune }}
-
 ---
+{{- end }}
 {{- end }}
 {{- end }}
