@@ -1,7 +1,8 @@
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: github-tekton-ci
+  name: {{ $.Values.pipelineName }}
+  namespace: {{ $.Values.namespace }}
 spec:
   description: |
     This pipeline clones a git repo, then echoes the README file to the stout.
@@ -39,9 +40,6 @@ spec:
     description: basic-auth
   - name: docker-credentials
     description: docker cred
-  - name: cosign
-  - name: dockerconfig
-  - name: cosign-pub
   tasks:
   - name: fetch-source
     taskRef:
@@ -51,7 +49,6 @@ spec:
     - name: output
       workspace: shared-data
     - name: basic-auth
-#    - name: ssh-directory
       workspace: git-credentials
     params:
     - name: url
@@ -76,50 +73,6 @@ spec:
         value: $(params.pathToContext)
       - name: IMAGE
         value: $(params.imageUrl):$(params.imageTag)
-
-  - name: cosign-sign
-    runAfter: ["build"]
-    taskRef:
-      name: cosign-sign
-      kind: ClusterTask
-    workspaces:
-    - name: source
-      workspace: shared-data
-    - name: dockerconfig
-      workspace: dockerconfig
-    - name: cosign
-      workspace: cosign
-    params:
-    - name: image
-      value: "$(params.imageUrl)@$(tasks.build.results.IMAGE_DIGEST)"
-    - name: eventname
-      value: "$(params.eventname)"
-    when:
-    - input: "$(params.eventname)"
-      operator: in
-      values: [ "push" , "tag" ,"release" ]
-  - name: cosign-image-verify
-    runAfter: ["cosign-sign"]
-    taskRef:
-      name: cosign-image-verify
-      kind: ClusterTask
-    workspaces:
-    - name: source
-      workspace: shared-data
-    - name: dockerconfig
-      workspace: dockerconfig
-    - name: cosign
-      workspace: cosign-pub
-    params:
-    - name: image
-      value: "$(params.imageUrl)@$(tasks.build.results.IMAGE_DIGEST)"
-    - name: eventname
-      value: "$(params.eventname)"
-    when:
-    - input: "$(params.eventname)"
-      operator: in
-      values: [ "push" , "tag" , "release" ]
-
   finally:
     - name: github-set-status-fail
       when:
@@ -137,13 +90,13 @@ spec:
         - name: "REPO_FULL_NAME"
           value: "$(params.reponame)"
         - name: "GITHUB_TOKEN_SECRET_NAME"
-          value: "git1"
+          value: "gitcred"
         - name: "GITHUB_TOKEN_SECRET_KEY"
           value: "token"
         - name: "SHA"
           value: "$(params.revision)"
         - name: "TARGET_URL"
-          value: "http://localhost:8001/api/v1/namespaces/tekton-pipelines/services/tekton-dashboard:http/proxy/"
+          value: {{ $.Values.tektonDashboard }}
           #value: "dashboard.domain.app"
         - name: "CONTEXT"
           value: "tekton-pipeline"
@@ -166,26 +119,15 @@ spec:
         - name: "REPO_FULL_NAME"
           value: "$(params.reponame)"
         - name: "GITHUB_TOKEN_SECRET_NAME"
-          value: "git1"
+          value: "gitcred"
         - name: "GITHUB_TOKEN_SECRET_KEY"
           value: "token"
         - name: "SHA"
           value: "$(params.revision)"
         - name: "TARGET_URL"
-          value: "http://localhost:8001/api/v1/namespaces/tekton-pipelines/services/tekton-dashboard:http/proxy/"
+          value: {{ $.Values.tektonDashboard }}
           #value: "dashboard.domain.app"
         - name: "CONTEXT"
           value: "tekton-pipeline"
         - name: "DESCRIPTION"
           value: "Finished building your commit in Tekton"
-    
-
-
-
-
-
- 
-
-
-
-

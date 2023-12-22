@@ -1,0 +1,80 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: {{ $.Values.pipelineName }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  params:
+  - name: PLRNAME
+    value: github-proj-uuid-pr-
+  - name: IMAGETAG
+    value: $(extensions.image_tag)
+  - name: EVENT
+    value: $(extensions.event)
+  - name: rel-tag
+    value: $(extensions.image_tag)
+  
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: {{ $.Values.pipelineName }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  params:
+  - name: repo-url
+    description: repo url
+  - name: revision
+    description: sha,branch
+  - name: IMAGE
+    description: image name
+  - name: IMAGETAG
+    description: tag of img
+  - name: EVENT
+    description: event occured
+  - name: REPONAME
+    description: repo name
+  - name: rel-tag
+    description: release tag
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1beta1
+    kind: PipelineRun
+    metadata:
+      generateName: trigger-tekton-ci-
+    spec:
+      serviceAccountName: {{ $.Values.pipelineName }}
+      pipelineRef:
+        name: {{ $.Values.pipelineName }}
+      podTemplate:
+        securityContext:
+          fsGroup: 65532
+      workspaces:
+      - name: shared-data
+        volumeClaimTemplate:
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 30Gi   
+      - name: git-credentials
+        secret:
+          secretName: "gitcred-{{ $.Values.pipelineName }}"
+      - name: docker-credentials
+        secret:
+          secretName: "docker-credentials-{{ $.Values.pipelineName }}"
+      params:
+      - name: repo-url
+        value: $(tt.params.repo-url)
+      - name: revision
+        value: $(tt.params.revision)
+      - name: imageUrl
+        value: $(tt.params.IMAGE)
+      - name: imageTag
+        value: $(tt.params.IMAGETAG)
+      - name: eventname
+        value: $(tt.params.EVENT)
+      - name: reponame
+        value: $(tt.params.REPONAME)
+      - name: retag
+        value: $(tt.params.rel-tag)

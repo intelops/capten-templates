@@ -1,0 +1,4 @@
+pipelineName: "replace"
+ingressDomainName: "tekton.azureagent.optimizor.app"
+tektonDashboard: "replace"
+namespace: "tekton-pipelines"
