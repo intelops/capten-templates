@@ -1,7 +1,7 @@
 project: default
 
 source:
-  repoURL: https://github.com/intelops/capten-templates
+  repoURL: https://github.com/intelops/capten-templates.git
   targetRevision: main
   
 destination:
