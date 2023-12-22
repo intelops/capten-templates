@@ -20,14 +20,3 @@ syncPolicy:
 compositions:
   - name: aws-compositions
     path: infra/clusters/compositions/aws
-
-clusters:
-  - name: dev-test
-    defaultApps:
-    - name: falco
-      valuesPath: infra/clusters/app-configs/dev-test/falco-values.yaml
-      repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'
-      namespace: falco
-      chart: falco
-      targetRevision: "0.0.1"
-
