@@ -23,3 +23,15 @@ defaultApps:
     chart: promtail
     targetRevision: "1.0.0"
     valuesPath: infra/clusters/app-configs/{{.ClusterName}}/promtail-values.yaml
+  - name: kubviz-agent
+    repoURL: 'https://intelops.github.io/kubviz/'
+    namespace: observability
+    chart: agent
+    targetRevision: "1.1.10"
+    valuesPath: infra/clusters/app-configs/{{.ClusterName}}/kubviz-agent-values.yaml
+  - name: external-secrets
+    repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'
+    namespace: external-secrets
+    chart: external-secrets
+    targetRevision: "1.0.0"
+    valuesPath: infra/clusters/app-configs/{{.ClusterName}}/external-secrets-values.yaml  
