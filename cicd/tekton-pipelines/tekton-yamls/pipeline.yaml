@@ -131,7 +131,7 @@ spec:
         kind: ClusterTask
       params:
         - name: "STATE"
-          value: "failed"
+          value: "failure"
         - name: "GITHUB_HOST_URL"
           value: "api.github.com"
         - name: "REPO_FULL_NAME"
