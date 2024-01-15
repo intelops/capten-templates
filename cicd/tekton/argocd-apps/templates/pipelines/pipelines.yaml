@@ -17,6 +17,9 @@ spec:
   destination:
     server: {{ $.Values.destination.server }}
     namespace: tekton-pipelines
+  syncPolicy:
+    automated:
+      prune: true 
 --- 
 {{- end }}
 {{- end }}
