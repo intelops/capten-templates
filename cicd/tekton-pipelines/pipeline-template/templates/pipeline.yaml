@@ -30,6 +30,13 @@ spec:
     description: repo name
   - name: retag
     description: rel tag
+  - name: configGitUrl
+    description: The application config (GitOps) repository
+  - name: userEmail 
+    description: email of the user
+    default: "example@gmail.com"
+  - name: argo-app-name
+    description: argo app name
  
   workspaces:
   - name: shared-data
@@ -40,6 +47,9 @@ spec:
     description: basic-auth
   - name: docker-credentials
     description: docker cred
+  - name: cosign
+  - name: dockerconfig
+  - name: cosign-pub
   tasks:
   - name: fetch-source
     taskRef:
@@ -57,6 +67,7 @@ spec:
       value: $(params.PARAM_SCM)
     - name: revision
       value: $(params.revision)
+
   - name: build
     taskRef:
       name: kaniko-build
@@ -73,6 +84,88 @@ spec:
         value: $(params.pathToContext)
       - name: IMAGE
         value: $(params.imageUrl):$(params.imageTag)
+
+  - name: deploy-app
+    runAfter: ["build"]
+    taskRef:
+      name: deploy
+      kind: ClusterTask
+    params:
+    - name: argo-app-name
+      value: $(params.argo-app-name)
+    - name: configGitUrl
+      value: $(params.configGitUrl)
+    - name: userEmail 
+      value: $(params.userEmail)
+    - name: IMAGE
+      value: $(params.imageUrl)
+    - name: ImageTag
+      value: $(params.imageTag)
+    workspaces:
+    - name: config-source
+      workspace: shared-data
+    - name: basic-auth
+      workspace: git-credentials
+    - name: output
+      workspace: shared-data
+
+  - name: qt-testcase
+    runAfter: ["deploy-app"]
+    taskRef:
+      name: install-and-run-qt
+      kind: ClusterTask
+    workspaces:
+    - name: config-source
+      workspace: shared-data
+    - name: basic-auth
+      workspace: git-credentials
+    - name: output
+      workspace: shared-data
+
+  - name: cosign-sign
+    runAfter: ["build"]
+    taskRef:
+      name: cosign-sign
+      kind: ClusterTask
+    workspaces:
+    - name: source
+      workspace: shared-data
+    - name: dockerconfig
+      workspace: dockerconfig
+    - name: cosign
+      workspace: cosign
+    params:
+    - name: image
+      value: "$(params.imageUrl)@$(tasks.build.results.IMAGE_DIGEST)"
+    - name: eventname
+      value: "$(params.eventname)"
+    when:
+    - input: "$(params.eventname)"
+      operator: in
+      values: [ "push" , "tag" ,"release" ]
+
+  - name: cosign-image-verify
+    runAfter: ["cosign-sign"]
+    taskRef:
+      name: cosign-image-verify
+      kind: ClusterTask
+    workspaces:
+    - name: source
+      workspace: shared-data
+    - name: dockerconfig
+      workspace: dockerconfig
+    - name: cosign
+      workspace: cosign-pub
+    params:
+    - name: image
+      value: "$(params.imageUrl)@$(tasks.build.results.IMAGE_DIGEST)"
+    - name: eventname
+      value: "$(params.eventname)"
+    when:
+    - input: "$(params.eventname)"
+      operator: in
+      values: [ "push" , "tag" , "release" ]
+
   finally:
     - name: github-set-status-fail
       when:
@@ -96,7 +189,7 @@ spec:
         - name: "SHA"
           value: "$(params.revision)"
         - name: "TARGET_URL"
-          value: {{ $.Values.tektonDashboard }}
+          value: "{{ .Values.tektonDashboard }}/#/namespaces/tek/pipelineruns/trigger-$(params.ID)"
           #value: "dashboard.domain.app"
         - name: "CONTEXT"
           value: "tekton-pipeline"
@@ -125,7 +218,7 @@ spec:
         - name: "SHA"
           value: "$(params.revision)"
         - name: "TARGET_URL"
-          value: {{ $.Values.tektonDashboard }}
+          value: "{{ $.Values.tektonDashboard }}/#/namespaces/tek/pipelineruns/trigger-$(params.ID)"
           #value: "dashboard.domain.app"
         - name: "CONTEXT"
           value: "tekton-pipeline"

@@ -31,6 +31,10 @@ spec:
           value: ghcr.io/$(body.repository.full_name)
         - name: REPONAME
           value: $(body.repository.full_name)
+        - name: EMAIL
+          value: $(body.repository.owner.email)
+        - name: id
+          value: $(header.X-GitHub-Delivery)
         - ref: {{ $.Values.pipelineName }}
       template:
         ref: {{ $.Values.pipelineName }}
@@ -60,6 +64,8 @@ spec:
         value: $(body.repository.full_name)
       - name: IMAGE
         value: ghcr.io/$(body.repository.full_name)
+      - name: EMAIL
+        value: $(body.repository.owner.email)
       - ref: trigger-binding
       template:
         ref: {{ $.Values.pipelineName }}
@@ -88,6 +94,10 @@ spec:
           value:  ghcr.io/$(body.repository.full_name)  
         - name: REPONAME
           value: $(body.repository.full_name)
+        - name: EMAIL
+          value: $(body.repository.owner.email)
+        - name: id
+          value: $(header.X-GitHub-Delivery)
         - ref: {{ $.Values.pipelineName }}
       template:
         ref: {{ $.Values.pipelineName }}
