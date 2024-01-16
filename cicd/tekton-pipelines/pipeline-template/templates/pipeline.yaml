@@ -30,6 +30,8 @@ spec:
     description: repo name
   - name: retag
     description: rel tag
+  - name: ID
+    description: id of pipelinerun
   - name: configGitUrl
     description: The application config (GitOps) repository
   - name: userEmail 
