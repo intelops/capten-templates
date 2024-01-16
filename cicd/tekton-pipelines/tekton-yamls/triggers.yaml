@@ -30,6 +30,8 @@ spec:
           value: ghcr.io/$(body.repository.full_name)
         - name: REPONAME
           value: $(body.repository.full_name)
+        - name: id
+          value: $(header.X-GitHub-Delivery)
         - ref: trigger-binding
       template:
         ref: trigger-template-github
@@ -60,6 +62,8 @@ spec:
         value: $(body.project.path_with_namespace)
       - name: IMAGE
         value: registry.gitlab.com/$(body.user_name)/$(body.project.name)
+      - name: id
+        value: $(header.X-Gitlab-Event-UUID)
       - ref: trigger-binding
       template:
         ref: trigger-template-gitlab
@@ -147,6 +151,8 @@ spec:
           value:  ghcr.io/$(body.repository.full_name)  
         - name: REPONAME
           value: $(body.repository.full_name)
+        - name: id
+          value: $(header.X-GitHub-Delivery)
         - ref: trigger-binding
       template:
         ref: trigger-template-github
@@ -178,6 +184,8 @@ spec:
           value: $(body.project.path_with_namespace)
         - name: IMAGE
           value: registry.gitlab.com/$(body.user.name)/$(body.project.name)
+        - name: id
+          value: $(header.X-Gitlab-Event-UUID)
         - ref: trigger-binding
       template:
         ref: trigger-template-gitlab
@@ -233,6 +241,8 @@ spec:
     description: repo name
   - name: rel-tag
     description: release tag
+  - name: id
+    description: pipelinerun id
   resourcetemplates:
   - apiVersion: tekton.dev/v1beta1
     kind: PipelineRun
@@ -284,7 +294,8 @@ spec:
         value: $(tt.params.REPONAME)
       - name: retag
         value: $(tt.params.rel-tag)
-      
+      - name: ID
+        value: $(tt.params.id)
 ---
 apiVersion: triggers.tekton.dev/v1beta1
 kind: TriggerTemplate
@@ -306,6 +317,8 @@ spec:
     description: repo name
   - name: rel-tag
     description: release tag
+  - name: id
+    description: pipelinerun id
   resourcetemplates:
   - apiVersion: tekton.dev/v1beta1
     kind: PipelineRun
@@ -358,6 +371,9 @@ spec:
         value: $(tt.params.REPONAME)
       - name: retag
         value: $(tt.params.rel-tag)
+      - name: ID
+        value: $(tt.params.id)
+
 
 
 

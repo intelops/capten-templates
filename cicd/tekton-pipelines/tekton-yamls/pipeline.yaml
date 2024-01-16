@@ -29,6 +29,9 @@ spec:
     description: repo name
   - name: retag
     description: rel tag
+  - name: ID
+    description: id of pipelinerun
+
  
   workspaces:
   - name: shared-data
@@ -143,7 +146,7 @@ spec:
         - name: "SHA"
           value: "$(params.revision)"
         - name: "TARGET_URL"
-          value: "http://localhost:8001/api/v1/namespaces/tekton-pipelines/services/tekton-dashboard:http/proxy/"
+          value: "http://tekton.azureagent.optimizor.app/#/namespaces/tek/pipelineruns/trigger-$(params.ID)"
           #value: "dashboard.domain.app"
         - name: "CONTEXT"
           value: "tekton-pipeline"
@@ -172,7 +175,7 @@ spec:
         - name: "SHA"
           value: "$(params.revision)"
         - name: "TARGET_URL"
-          value: "http://localhost:8001/api/v1/namespaces/tekton-pipelines/services/tekton-dashboard:http/proxy/"
+          value: "http://tekton.azureagent.optimizor.app/#/namespaces/tek/pipelineruns/trigger-$(params.ID)"
           #value: "dashboard.domain.app"
         - name: "CONTEXT"
           value: "tekton-pipeline"
