@@ -1,0 +1,93 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: {{ $.Values.pipelineName }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  serviceAccountName: {{ $.Values.pipelineName }}
+  triggers:
+    - name: github-push-event
+      interceptors:
+        - ref:
+            name: "cel"
+          params:
+              - name: "filter"
+                value: >
+                  (
+                    header.match('x-github-event', 'push')  && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master')
+                  )
+              - name: "overlays"
+                value:
+                - key: image_tag
+                  expression: "\"latest\""
+                - key: event
+                  expression: "\"push\"" 
+      bindings:
+        - name: revision
+          value: $(body.head_commit.id)
+        - name: repo-url
+          value: $(body.repository.clone_url)
+        - name: IMAGE
+          value: ghcr.io/$(body.repository.full_name)
+        - name: REPONAME
+          value: $(body.repository.full_name)
+        - ref: {{ $.Values.pipelineName }}
+      template:
+        ref: {{ $.Values.pipelineName }}
+
+    - name: tag-event-github
+      interceptors:
+        - ref:
+            name: "cel"
+          params:
+              - name: "filter"
+                value: >
+                  (
+                    header.match('x-github-event', 'create') && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master' || body.ref_type == 'tag'  )
+                  )
+              - name: "overlays"
+                value:
+                - key: image_tag
+                  expression: "body.ref"
+                - key: event
+                  expression: "\"tag\""
+      bindings:
+      - name: revision
+        value: $(body.master_branch)
+      - name: repo-url
+        value: $(body.repository.clone_url)
+      - name: REPONAME
+        value: $(body.repository.full_name)
+      - name: IMAGE
+        value: ghcr.io/$(body.repository.full_name)
+      - ref: trigger-binding
+      template:
+        ref: {{ $.Values.pipelineName }}
+    - name: pull-request-github
+      interceptors:  
+        - ref:
+            name: "cel"
+          params:
+              - name: "filter"
+                value: >
+                  (
+                    header.match('x-github-event', 'pull_request') && body.action in ['opened']  && (body.pull_request.base.ref == 'main' || body.pull_request.base.ref == 'master')          
+                  )
+              - name: "overlays"
+                value: 
+                - key: image_tag
+                  expression: "['pr', string(body.pull_request.number)].join('-')"
+                - key: event
+                  expression: "\"pull-request\""
+      bindings:
+        - name: revision
+          value: $(body.pull_request.head.sha)
+        - name: repo-url
+          value: $(body.repository.clone_url)
+        - name: IMAGE
+          value:  ghcr.io/$(body.repository.full_name)  
+        - name: REPONAME
+          value: $(body.repository.full_name)
+        - ref: {{ $.Values.pipelineName }}
+      template:
+        ref: {{ $.Values.pipelineName }}
