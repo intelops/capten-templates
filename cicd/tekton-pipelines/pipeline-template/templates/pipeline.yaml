@@ -59,7 +59,7 @@ spec:
       value: $(params.revision)
   - name: build
     taskRef:
-      name: kaniko-build
+      name: kaniko
       kind: ClusterTask
     runAfter:
       - fetch-source
