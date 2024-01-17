@@ -1,6 +1,6 @@
 clusterName: {{.ClusterName}}
 nats:
-  host: {{.NatsHost}}
+  host: {{.LoadBalancerHost}}
   auth:
     secret:
       name: "secret-new"
