@@ -6,7 +6,6 @@ source:
   
 destination:
   server: https://kubernetes.default.svc
-  namespace: tekton
 
 syncPolicy:
   CreateNamespace: true
@@ -14,6 +13,4 @@ syncPolicy:
     prune: false
     selfHeal: true
 
-tektonPipelines:
-  - name: tekton-pipeline-dev-cluster
-    path: cicd/tekton-pipelines/tekton-yamls
+tektonPath: cicd/tekton-pipelines

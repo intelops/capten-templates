@@ -1,0 +1,156 @@
+apiVersion: tekton.dev/v1beta1
+kind: ClusterTask
+metadata:
+  name: deploy
+spec:
+  params:
+  - name: argo-app-name
+  - name: configGitUrl
+  - name: IMAGE
+  - name: ImageTag
+  - name: userHome
+    description: |
+      Absolute path to the user's home directory.
+    type: string
+    default: "/home/git"
+  - name: PARAM_SCM
+    description: Define the Source code Management URL
+    type: string
+    default: "github.com"
+  - name: userEmail  
+    description: "User email for Git configuration"
+    type: string
+  workspaces:
+  - name: config-source
+  - name: output
+    description: The git repo will be cloned onto the volume backing this Workspace.
+  - name: ssh-directory
+    optional: true
+    description: |
+      A .ssh directory with private key, known_hosts, config, etc. Copied to
+      the user's home before git commands are executed. Used to authenticate
+      with the git remote when performing the clone. Binding a Secret to this
+      Workspace is strongly recommended over other volume types.
+  - name: basic-auth
+    optional: true
+    description: |
+      A Workspace containing a .gitconfig and .git-credentials file. These
+      will be copied to the user's home before any git commands are run. Any
+      other files in this Workspace are ignored. It is strongly recommended
+      to use ssh-directory over basic-auth whenever possible and to bind a
+      Secret to this Workspace over other volume types.
+  - name: ssl-ca-directory
+    optional: true
+    description: |
+      A workspace containing CA certificates, this will be used by Git to
+      verify the peer with when fetching or pushing over HTTPS.
+  stepTemplate:
+    envFrom:
+    - secretRef:
+        name: argocd-env-secret
+    env:
+    - name: ARGOCD_SERVER
+      value: {{ .Values.argocd.server }}
+
+  steps:
+  - name: clone-repo
+    image: ghcr.io/kube-tarian/helmrepo-supporting-tools/git:v2.26.2
+    script: |
+      echo "Cloning the repository..."
+      git clone $(params.configGitUrl) /workspace/source
+
+  - name: update-yaml
+    image: ghcr.io/kube-tarian/helmrepo-supporting-tools/git:v2.26.2
+    workingDir: "/workspace/source"
+    script: |
+      #!/usr/bin/env sh
+      set -e
+
+      VALUES_FILE="{{ .Values.argocd.apps.valuesPath }}"
+
+      echo "updating image tag to $(inputs.params.ImageTag)"
+      sed -i "s#$(inputs.params.IMAGE):[a-zA-Z0-9]\\+#$(inputs.params.IMAGE):$(inputs.params.ImageTag)#" "$VALUES_FILE"
+      
+      # Update the tag for the structure: tag: ""
+      sed -E -i "s#(tag:)\s*\"?[^\"]*\"?#\1 \"$(inputs.params.ImageTag)\"#" "$VALUES_FILE"
+
+  - name: commit-push-changes-gitops
+    image: ghcr.io/kube-tarian/helmrepo-supporting-tools/git:v2.26.2
+    env:
+    - name: PARAM_USER_HOME
+      value: $(params.userHome)
+    - name: WORKSPACE_SSH_DIRECTORY_BOUND
+      value: $(workspaces.ssh-directory.bound)
+    - name: WORKSPACE_SSH_DIRECTORY_PATH
+      value: $(workspaces.ssh-directory.path)
+    - name: WORKSPACE_BASIC_AUTH_DIRECTORY_BOUND
+      value: $(workspaces.basic-auth.bound)
+    - name: WORKSPACE_BASIC_AUTH_DIRECTORY_PATH
+      value: $(workspaces.basic-auth.path)
+    - name: USER_EMAIL
+      value: $(params.userEmail)
+    workingDir: "/workspace/source"
+    script: |
+      #!/usr/bin/env sh
+      set -e
+
+      mkdir -p "${PARAM_USER_HOME}"
+
+      if [ "${WORKSPACE_BASIC_AUTH_DIRECTORY_BOUND}" = "true" ]; then
+        echo "${PARAM_USER_HOME}"
+        touch "${PARAM_USER_HOME}/.git-credentials"
+        touch "${PARAM_USER_HOME}/.gitconfig"
+        chmod 755 "${PARAM_USER_HOME}/.git-credentials"
+        chmod 755 "${PARAM_USER_HOME}/.gitconfig"
+        git config --global credential.helper cache
+        git config --global credential.helper "cache --timeout=3600"
+        export USERNAME=`cat /workspace/basic-auth/username`
+        export TOKEN=`cat /workspace/basic-auth/password`
+        git config --global user.name "${USERNAME}"
+        git config --global credential.helper "store --file ${PARAM_USER_HOME}/.git-credentials"
+        echo "https://${USERNAME}:${TOKEN}@github.com" > "${PARAM_USER_HOME}/.git-credentials"
+        chmod 400 "${PARAM_USER_HOME}/.git-credentials"
+        chmod 400 "${PARAM_USER_HOME}/.gitconfig"
+      fi
+
+      if [ "${WORKSPACE_SSH_DIRECTORY_BOUND}" = "true" ]; then
+        cp -R "${WORKSPACE_SSH_DIRECTORY_PATH}" "${PARAM_USER_HOME}/.ssh"
+        chmod 700 "${PARAM_USER_HOME}/.ssh"
+        chmod -R 400 "${PARAM_USER_HOME}/.ssh/*"
+      fi
+      
+      export USERNAME=`cat /workspace/basic-auth/username`
+      git config --global user.email "${USER_EMAIL}"
+      git config --global user.name "${USERNAME}"  # Set your name here
+
+      git add .
+      git commit --allow-empty -m "updating imagetag to $(inputs.params.ImageTag)"
+
+      git push origin main
+
+  - name: wait-for-argocd-rollout
+    image: ghcr.io/kube-tarian/helmrepo-supporting-tools/argocd:v2.6.15
+    script: |
+      #!/usr/bin/env sh
+      set -e
+
+      argocd login $ARGOCD_SERVER --username $ARGOCD_USERNAME --password $ARGOCD_PASSWORD --insecure
+      argocd app sync $(inputs.params.argo-app-name) --insecure
+      argocd app wait $(inputs.params.argo-app-name) --sync --health --operation --insecure
+
+  - name: check-argocd-status
+    image: ghcr.io/kube-tarian/helmrepo-supporting-tools/argocd:v2.6.15
+    script: |
+      #!/usr/bin/env sh
+      set -e
+
+      argocd login $ARGOCD_SERVER --username $ARGOCD_USERNAME --password $ARGOCD_PASSWORD --insecure
+      sync_status=$(argocd app get $(inputs.params.argo-app-name) | awk '/Sync Status:/ {print $3}')
+      echo "Sync Status: $sync_status"
+      if [ "$sync_status" = "Synced" ]; then
+        echo "Application is successfully synced."
+      else
+        echo "Application synchronization failed."
+      fi
+
+---

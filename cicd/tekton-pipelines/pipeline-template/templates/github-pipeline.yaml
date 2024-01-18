@@ -1,7 +1,8 @@
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: gitlab-tekton-ci
+  name: {{ $.Values.pipelineName }}-github
+  namespace: {{ $.Values.namespace }}
 spec:
   description: |
     This pipeline clones a git repo, then echoes the README file to the stout.
@@ -14,7 +15,7 @@ spec:
   - name: PARAM_SCM
     description: Define the Source code Management URL
     type: string
-    default: "gitlab.com"    
+    default: "github.com"    
   - name: pathToContext
     description: The path to the build context, used by Kaniko - within the workspace
     default: .
@@ -25,10 +26,20 @@ spec:
     default: "latest"
   - name: eventname
     description: name of event happens
-  - name: reponame 
+  - name: reponame
     description: repo name
   - name: retag
     description: rel tag
+  - name: ID
+    description: id of pipelinerun
+  - name: configGitUrl
+    description: The application config (GitOps) repository
+  - name: userEmail 
+    description: email of the user
+    default: "example@gmail.com"
+  - name: argo-app-name
+    description: argo app name
+ 
   workspaces:
   - name: shared-data
     description: |
@@ -50,7 +61,6 @@ spec:
     - name: output
       workspace: shared-data
     - name: basic-auth
-#    - name: ssh-directory
       workspace: git-credentials
     params:
     - name: url
@@ -59,6 +69,7 @@ spec:
       value: $(params.PARAM_SCM)
     - name: revision
       value: $(params.revision)
+
   - name: build
     taskRef:
       name: kaniko-build
@@ -75,6 +86,43 @@ spec:
         value: $(params.pathToContext)
       - name: IMAGE
         value: $(params.imageUrl):$(params.imageTag)
+
+  - name: deploy-app
+    runAfter: ["build"]
+    taskRef:
+      name: deploy
+      kind: ClusterTask
+    params:
+    - name: argo-app-name
+      value: $(params.argo-app-name)
+    - name: configGitUrl
+      value: $(params.configGitUrl)
+    - name: userEmail 
+      value: $(params.userEmail)
+    - name: IMAGE
+      value: $(params.imageUrl)
+    - name: ImageTag
+      value: $(params.imageTag)
+    workspaces:
+    - name: config-source
+      workspace: shared-data
+    - name: basic-auth
+      workspace: git-credentials
+    - name: output
+      workspace: shared-data
+
+  - name: qt-testcase
+    runAfter: ["deploy-app"]
+    taskRef:
+      name: install-and-run-qt
+      kind: ClusterTask
+    workspaces:
+    - name: config-source
+      workspace: shared-data
+    - name: basic-auth
+      workspace: git-credentials
+    - name: output
+      workspace: shared-data
 
   - name: cosign-sign
     runAfter: ["build"]
@@ -97,6 +145,7 @@ spec:
     - input: "$(params.eventname)"
       operator: in
       values: [ "push" , "tag" ,"release" ]
+
   - name: cosign-image-verify
     runAfter: ["cosign-sign"]
     taskRef:
@@ -120,70 +169,58 @@ spec:
       values: [ "push" , "tag" , "release" ]
 
   finally:
-    - name: gitlab-set-status-fail
+    - name: github-set-status-fail
       when:
       - input: $(tasks.status)
         operator: in
         values: [ "Failed", "None" ] 
       taskRef:
-        name: gitlab-set-status
+        name: github-set-status
         kind: ClusterTask
       params:
         - name: "STATE"
-          value: "failed"
-        - name: "GITLAB_HOST_URL"
-          value: "api.gitlab.com"
+          value: "failure"
+        - name: "GITHUB_HOST_URL"
+          value: "api.github.com"
         - name: "REPO_FULL_NAME"
           value: "$(params.reponame)"
-        - name: "GITLAB_TOKEN_SECRET_NAME"
-          value: "gitlab-token"
-        - name: "GITLAB_TOKEN_SECRET_KEY"
-          value: "token"
+        - name: "GITHUB_TOKEN_SECRET_NAME"
+          value: "gitcred-{{ $.Values.pipelineName }}"
+        - name: "GITHUB_TOKEN_SECRET_KEY"
+          value: "password"
         - name: "SHA"
           value: "$(params.revision)"
         - name: "TARGET_URL"
-          value: "http://localhost:8001/api/v1/namespaces/tekton-pipelines/services/tekton-dashboard:http/proxy/"
-          #value: "dashboard.domain.app"
+          value: "{{ .Values.tektonDashboard }}/#/namespaces/{{ .Values.namespace }}/pipelineruns/trigger-$(params.ID)"
         - name: "CONTEXT"
-          value: "Building your MR"
+          value: "tekton-pipeline"
         - name: "DESCRIPTION"
-          value: "continuous-integration/tekton"
+          value: "An error occurred building your commit in Tekton"
 
-    - name: gitlab-set-status-success
+    - name: github-set-status-success
       when:
       - input: $(tasks.status)
         operator: in
         values: [ "Succeeded", "Completed" ] 
       taskRef:
-        name: gitlab-set-status
+        name: github-set-status
         kind: ClusterTask
       params:
         - name: "STATE"
           value: "success"
-        - name: "GITLAB_HOST_URL"
-          value: "gitlab.com"
-        - name: "API_PATH_PREFIX"
-          value: "/api/v4"
+        - name: "GITHUB_HOST_URL"
+          value: "api.github.com"
         - name: "REPO_FULL_NAME"
           value: "$(params.reponame)"
-        - name: "GITLAB_TOKEN_SECRET_NAME"
-          value: "gitlab-token"
-        - name: "GITLAB_TOKEN_SECRET_KEY"
-          value: "token"
+        - name: "GITHUB_TOKEN_SECRET_NAME"
+          value: "gitcred-{{ $.Values.pipelineName }}"
+        - name: "GITHUB_TOKEN_SECRET_KEY"
+          value: "password"
         - name: "SHA"
           value: "$(params.revision)"
         - name: "TARGET_URL"
-          value: "http://localhost:8001/api/v1/namespaces/tekton-pipelines/services/tekton-dashboard:http/proxy/"
-          #value: "dashboard.domain.app"
+          value: "{{ .Values.tektonDashboard }}/#/namespaces/{{ .Values.namespace }}/pipelineruns/trigger-$(params.ID)"
         - name: "CONTEXT"
           value: "tekton-pipeline"
         - name: "DESCRIPTION"
           value: "Finished building your commit in Tekton"
-    
-
-
-
-
-
- 
-

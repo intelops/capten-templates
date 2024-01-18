@@ -1,7 +1,8 @@
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: github-tekton-ci
+  name: {{ $.Values.pipelineName }}-gitlab
+  namespace: {{ $.Values.namespace }}
 spec:
   description: |
     This pipeline clones a git repo, then echoes the README file to the stout.
@@ -14,7 +15,7 @@ spec:
   - name: PARAM_SCM
     description: Define the Source code Management URL
     type: string
-    default: "github.com"    
+    default: "gitlab.com"    
   - name: pathToContext
     description: The path to the build context, used by Kaniko - within the workspace
     default: .
@@ -25,11 +26,12 @@ spec:
     default: "latest"
   - name: eventname
     description: name of event happens
-  - name: reponame
+  - name: reponame 
     description: repo name
   - name: retag
     description: rel tag
- 
+  - name: ID
+    description: id of pipelinerun
   workspaces:
   - name: shared-data
     description: |
@@ -51,7 +53,6 @@ spec:
     - name: output
       workspace: shared-data
     - name: basic-auth
-#    - name: ssh-directory
       workspace: git-credentials
     params:
     - name: url
@@ -98,6 +99,7 @@ spec:
     - input: "$(params.eventname)"
       operator: in
       values: [ "push" , "tag" ,"release" ]
+      
   - name: cosign-image-verify
     runAfter: ["cosign-sign"]
     taskRef:
@@ -121,59 +123,59 @@ spec:
       values: [ "push" , "tag" , "release" ]
 
   finally:
-    - name: github-set-status-fail
+    - name: gitlab-set-status-fail
       when:
       - input: $(tasks.status)
         operator: in
         values: [ "Failed", "None" ] 
       taskRef:
-        name: github-set-status
+        name: gitlab-set-status
         kind: ClusterTask
       params:
         - name: "STATE"
-          value: "failure"
-        - name: "GITHUB_HOST_URL"
-          value: "api.github.com"
+          value: "failed"
+        - name: "GITLAB_HOST_URL"
+          value: "api.gitlab.com"
         - name: "REPO_FULL_NAME"
           value: "$(params.reponame)"
-        - name: "GITHUB_TOKEN_SECRET_NAME"
-          value: "git1"
-        - name: "GITHUB_TOKEN_SECRET_KEY"
+        - name: "GITLAB_TOKEN_SECRET_NAME"
+          value: "gitlab-{{ $.Values.pipelineName }}"
+        - name: "GITLAB_TOKEN_SECRET_KEY"
           value: "token"
         - name: "SHA"
           value: "$(params.revision)"
         - name: "TARGET_URL"
-          value: "http://localhost:8001/api/v1/namespaces/tekton-pipelines/services/tekton-dashboard:http/proxy/"
-          #value: "dashboard.domain.app"
+          value: "{{ .Values.tektonDashboard }}/#/namespaces/{{ .Values.namespace }}/pipelineruns/trigger-$(params.ID)"
         - name: "CONTEXT"
-          value: "tekton-pipeline"
+          value: "Building your MR"
         - name: "DESCRIPTION"
-          value: "An error occurred building your commit in Tekton"
+          value: "continuous-integration/tekton"
 
-    - name: github-set-status-success
+    - name: gitlab-set-status-success
       when:
       - input: $(tasks.status)
         operator: in
         values: [ "Succeeded", "Completed" ] 
       taskRef:
-        name: github-set-status
+        name: gitlab-set-status
         kind: ClusterTask
       params:
         - name: "STATE"
           value: "success"
-        - name: "GITHUB_HOST_URL"
-          value: "api.github.com"
+        - name: "GITLAB_HOST_URL"
+          value: "gitlab.com"
+        - name: "API_PATH_PREFIX"
+          value: "/api/v4"
         - name: "REPO_FULL_NAME"
           value: "$(params.reponame)"
-        - name: "GITHUB_TOKEN_SECRET_NAME"
-          value: "git1"
-        - name: "GITHUB_TOKEN_SECRET_KEY"
+        - name: "GITLAB_TOKEN_SECRET_NAME"
+          value: "gitlab-{{ $.Values.pipelineName }}"
+        - name: "GITLAB_TOKEN_SECRET_KEY"
           value: "token"
         - name: "SHA"
           value: "$(params.revision)"
         - name: "TARGET_URL"
-          value: "http://localhost:8001/api/v1/namespaces/tekton-pipelines/services/tekton-dashboard:http/proxy/"
-          #value: "dashboard.domain.app"
+          value: "{{ .Values.tektonDashboard }}/#/namespaces/{{ .Values.namespace }}/pipelineruns/trigger-$(params.ID)"
         - name: "CONTEXT"
           value: "tekton-pipeline"
         - name: "DESCRIPTION"
@@ -185,7 +187,3 @@ spec:
 
 
  
-
-
-
-

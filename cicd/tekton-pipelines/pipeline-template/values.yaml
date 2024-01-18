@@ -1,0 +1,6 @@
+pipelineName: "replace"
+ingressDomainName: "tekton-event.azureagent.optimizor.app"
+tektonDashboard: "replace"
+namespace: "tekton-pipelines"
+configGitUrl: "gitops url"
+argoAppName: "appname"
