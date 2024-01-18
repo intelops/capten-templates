@@ -1,24 +1,23 @@
 apiVersion: triggers.tekton.dev/v1beta1
 kind: TriggerBinding
 metadata:
-  name: {{ $.Values.pipelineName }}
+  name: {{ $.Values.pipelineName }}-gitlab
   namespace: {{ $.Values.namespace }}
 spec:
   params:
-  - name: PLRNAME
-    value: github-proj-uuid-pr-
   - name: IMAGETAG
     value: $(extensions.image_tag)
   - name: EVENT
     value: $(extensions.event)
   - name: rel-tag
     value: $(extensions.image_tag)
-  
+
 ---
+
 apiVersion: triggers.tekton.dev/v1beta1
 kind: TriggerTemplate
 metadata:
-  name: {{ $.Values.pipelineName }}
+  name: {{ $.Values.pipelineName }}-gitlab
   namespace: {{ $.Values.namespace }}
 spec:
   params:
@@ -36,8 +35,6 @@ spec:
     description: repo name
   - name: rel-tag
     description: release tag
-  - name: EMAIL
-    description: user email
   - name: id
     description: pipelinerun id
   resourcetemplates:
@@ -48,7 +45,7 @@ spec:
     spec:
       serviceAccountName: {{ $.Values.pipelineName }}
       pipelineRef:
-        name: {{ $.Values.pipelineName }}
+        name: {{ $.Values.pipelineName }}-gitlab
       podTemplate:
         securityContext:
           fsGroup: 65532
@@ -63,10 +60,20 @@ spec:
                 storage: 30Gi   
       - name: git-credentials
         secret:
-          secretName: "gitcred-{{ $.Values.pipelineName }}"
+          secretName: gitlab-{{ $.Values.pipelineName }}
       - name: docker-credentials
         secret:
-          secretName: "docker-credentials-{{ $.Values.pipelineName }}"
+          secretName: docker-gitlab-{{ $.Values.pipelineName }}
+      - name: dockerconfig
+        secret:
+          secretName: dockerconfig-{{ $.Values.pipelineName }} # If you need to provide dockerconfig
+      - name: cosign
+        secret:
+          secretName: cosign-key-{{ $.Values.pipelineName }}
+      - name: cosign-pub
+        secret:
+          secretName: cosign-pub-{{ $.Values.pipelineName }}  
+   
       params:
       - name: repo-url
         value: $(tt.params.repo-url)
@@ -82,11 +89,5 @@ spec:
         value: $(tt.params.REPONAME)
       - name: retag
         value: $(tt.params.rel-tag)
-      - name: userEmail 
-        value: $(tt.params.EMAIL)
       - name: ID
         value: $(tt.params.id)
-      - name: configGitUrl
-        value: '{{ .Values.configGitUrl }}'
-      - name: argo-app-name
-        value: {{ .Values.argoAppName }}

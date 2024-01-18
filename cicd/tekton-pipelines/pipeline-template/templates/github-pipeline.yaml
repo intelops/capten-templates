@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: {{ $.Values.pipelineName }}
+  name: {{ $.Values.pipelineName }}-github
   namespace: {{ $.Values.namespace }}
 spec:
   description: |
@@ -191,8 +191,7 @@ spec:
         - name: "SHA"
           value: "$(params.revision)"
         - name: "TARGET_URL"
-          value: "{{ .Values.tektonDashboard }}/#/namespaces/tek/pipelineruns/trigger-$(params.ID)"
-          #value: "dashboard.domain.app"
+          value: "{{ .Values.tektonDashboard }}/#/namespaces/{{ .Values.namespace }}/pipelineruns/trigger-$(params.ID)"
         - name: "CONTEXT"
           value: "tekton-pipeline"
         - name: "DESCRIPTION"
@@ -220,8 +219,7 @@ spec:
         - name: "SHA"
           value: "$(params.revision)"
         - name: "TARGET_URL"
-          value: "{{ $.Values.tektonDashboard }}/#/namespaces/tek/pipelineruns/trigger-$(params.ID)"
-          #value: "dashboard.domain.app"
+          value: "{{ .Values.tektonDashboard }}/#/namespaces/{{ .Values.namespace }}/pipelineruns/trigger-$(params.ID)"
         - name: "CONTEXT"
           value: "tekton-pipeline"
         - name: "DESCRIPTION"

@@ -54,13 +54,13 @@ spec:
 
   steps:
   - name: clone-repo
-    image: alpine/git:v2.26.2
+    image: ghcr.io/kube-tarian/helmrepo-supporting-tools/git:v2.26.2
     script: |
       echo "Cloning the repository..."
       git clone $(params.configGitUrl) /workspace/source
 
   - name: update-yaml
-    image: alpine/git:v2.26.2
+    image: ghcr.io/kube-tarian/helmrepo-supporting-tools/git:v2.26.2
     workingDir: "/workspace/source"
     script: |
       #!/usr/bin/env sh
@@ -75,7 +75,7 @@ spec:
       sed -E -i "s#(tag:)\s*\"?[^\"]*\"?#\1 \"$(inputs.params.ImageTag)\"#" "$VALUES_FILE"
 
   - name: commit-push-changes-gitops
-    image: alpine/git:v2.26.2
+    image: ghcr.io/kube-tarian/helmrepo-supporting-tools/git:v2.26.2
     env:
     - name: PARAM_USER_HOME
       value: $(params.userHome)
@@ -129,7 +129,7 @@ spec:
       git push origin main
 
   - name: wait-for-argocd-rollout
-    image: argoproj/argocd:v2.6.15
+    image: ghcr.io/kube-tarian/helmrepo-supporting-tools/argocd:v2.6.15
     script: |
       #!/usr/bin/env sh
       set -e
@@ -139,7 +139,7 @@ spec:
       argocd app wait $(inputs.params.argo-app-name) --sync --health --operation --insecure
 
   - name: check-argocd-status
-    image: argoproj/argocd:v2.6.15
+    image: ghcr.io/kube-tarian/helmrepo-supporting-tools/argocd:v2.6.15
     script: |
       #!/usr/bin/env sh
       set -e

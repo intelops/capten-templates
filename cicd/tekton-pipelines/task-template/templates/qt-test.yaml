@@ -30,7 +30,7 @@ spec:
 
   steps:
     - name: install-and-run-qt
-      image: ghcr.io/akash4sh/quality-trace:v2
+      image: ghcr.io/intelops/quality-trace/cli:latest
       workingDir: /workspace/config-source
       script: |
       
