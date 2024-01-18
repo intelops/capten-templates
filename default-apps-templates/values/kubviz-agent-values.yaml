@@ -3,5 +3,5 @@ nats:
   host: {{.LoadBalancerHost}}
   auth:
     secret:
-      name: "secret-new"
+      name: "nats-secret"
       key: "nats-token"
