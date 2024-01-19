@@ -1,0 +1,281 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: {{ $.Values.pipelineName }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  serviceAccountName: {{ $.Values.pipelineName }}
+  triggers:
+    - name: github-push-event
+      interceptors:
+        - ref:
+            name: "cel"
+          params:
+            - name: "filter"
+              value: >
+                (
+                  header.match('x-github-event', 'push')  && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master')
+                )
+            - name: "overlays"
+              value:
+              - key: image_tag
+                expression: "\"latest\""
+              - key: event
+                expression: "\"push\"" 
+      bindings:
+        - name: revision
+          value: $(body.head_commit.id)
+        - name: repo-url
+          value: $(body.repository.clone_url)
+        - name: IMAGE
+          value: ghcr.io/$(body.repository.full_name)
+        - name: REPONAME
+          value: $(body.repository.full_name)
+        - name: EMAIL
+          value: $(body.repository.owner.email)
+        - name: id
+          value: $(header.X-GitHub-Delivery)
+        - ref: {{ $.Values.pipelineName }}-github
+      template:
+        ref: {{ $.Values.pipelineName }}-github
+
+    - name: tag-event-github
+      interceptors:
+        - ref:
+            name: "cel"
+          params:
+            - name: "filter"
+              value: >
+                (
+                  header.match('x-github-event', 'create') && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master' || body.ref_type == 'tag'  )
+                )
+            - name: "overlays"
+              value:
+              - key: image_tag
+                expression: "body.ref"
+              - key: event
+                expression: "\"tag\""
+      bindings:
+      - name: revision
+        value: $(body.master_branch)
+      - name: repo-url
+        value: $(body.repository.clone_url)
+      - name: REPONAME
+        value: $(body.repository.full_name)
+      - name: IMAGE
+        value: ghcr.io/$(body.repository.full_name)
+      - name: EMAIL
+        value: $(body.repository.owner.email)
+      - name: id
+        value: $(header.X-GitHub-Delivery)
+      - ref: {{ $.Values.pipelineName }}-github
+      template:
+        ref: {{ $.Values.pipelineName }}-github
+        
+    - name: pull-request-github
+      interceptors:  
+        - ref:
+            name: "cel"
+          params:
+            - name: "filter"
+              value: >
+                (
+                  header.match('x-github-event', 'pull_request') && body.action in ['opened']  && (body.pull_request.base.ref == 'main' || body.pull_request.base.ref == 'master')          
+                )
+            - name: "overlays"
+              value: 
+              - key: image_tag
+                expression: "['pr', string(body.pull_request.number)].join('-')"
+              - key: event
+                expression: "\"pull-request\""
+      bindings:
+        - name: revision
+          value: $(body.pull_request.head.sha)
+        - name: repo-url
+          value: $(body.repository.clone_url)
+        - name: IMAGE
+          value:  ghcr.io/$(body.repository.full_name)  
+        - name: REPONAME
+          value: $(body.repository.full_name)
+        - name: EMAIL
+          value: $(body.repository.owner.email)
+        - name: id
+          value: $(header.X-GitHub-Delivery)
+        - ref: {{ $.Values.pipelineName }}-github
+      template:
+        ref: {{ $.Values.pipelineName }}-github
+
+    - name: release-event-github
+      interceptors:
+      - ref:
+          name: "cel"
+        params:
+          - name: "filter"
+            value: >
+              (   
+                header.match('x-github-event', 'release') && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master' || body.ref == 'refs/heads/gh-pages' || body.action in ['created']  )
+              )
+          - name: "overlays"
+            value:
+            - key: image_tag
+              expression: "body.release.tag_name"
+            - key: event
+              expression: "\"release\""
+            
+      bindings:
+        - name: revision
+          value: $(body.release.target_commitish)
+        - name: repo-url
+          value: $(body.repository.clone_url)
+        - name: IMAGE
+          value: ghcr.io/$(body.repository.full_name)  
+        - name: REPONAME
+          value: $(body.repository.full_name)
+        - name: EMAIL
+          value: $(body.repository.owner.email)
+        - name: id
+          value: $(header.X-GitHub-Delivery)
+        - ref: {{ $.Values.pipelineName }}-github
+      template:
+        ref: {{ $.Values.pipelineName }}-github
+  
+    - name: gitlab-push-event
+      interceptors:
+        - ref:
+            name: "cel"
+          params:
+            - name: "filter"
+              value: >
+                (
+                    header.match('X-Gitlab-Event', 'Push Hook') && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master')
+                )
+            - name: "overlays"
+              value:
+              - key: image_tag
+                expression: "\"latest\""
+              - key: event
+                expression: "body.event_name"
+
+      bindings:
+      - name: revision
+        value: $(body.checkout_sha)
+      - name: repo-url
+        value: $(body.repository.git_http_url)
+      - name: REPONAME
+        value: $(body.project.path_with_namespace)
+      - name: IMAGE
+        value: registry.gitlab.com/$(body.user_name)/$(body.project.name)
+      - name: id
+        value: $(header.X-Gitlab-Event-UUID)
+      - ref: {{ $.Values.pipelineName }}-gitlab
+      template:
+        ref: {{ $.Values.pipelineName }}-gitlab
+
+    - name: tag-event-gitlab
+      interceptors:
+        - ref:
+            name: "cel"
+          params:
+            - name: "filter"
+              value: >
+                (
+                  header.match('X-Gitlab-Event', 'Tag Push Hook') && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master' || body.object_kind == 'tag_push'  )
+                )
+            - name: "overlays"
+              value:
+              - key: image_tag
+                expression: "body.ref.split('/')[2]"
+              - key: event
+                expression: "\"tag\""
+      bindings:
+      - name: revision
+        value: $(body.commits[0].id)
+      - name: repo-url
+        value: $(body.repository.git_http_url)
+      - name: REPONAME
+        value: $(body.project.path_with_namespace)
+      - name: IMAGE
+        value: registry.gitlab.com/$(body.user_name)/$(body.project.name)
+      - name: id
+        value: $(header.X-Gitlab-Event-UUID)
+      - ref: {{ $.Values.pipelineName }}-gitlab
+      template:
+        ref: {{ $.Values.pipelineName }}-gitlab
+
+    - name: merge-request-gitlab
+      interceptors:
+        - ref:
+            name: "cel"
+          params:
+            - name: "filter"
+              value: >
+                (
+                  header.match('X-Gitlab-Event', 'Merge Request Hook') && body.object_attributes.action in ['open'] && ( body.object_attributes.target_branch == 'main' || body.object_attributes.target_branch == 'master' )
+                )
+            - name: "overlays"
+              value:
+              - key: image_tag
+                expression: "['mr', string(body.object_attributes.iid)].join('-')"
+              - key: event
+                expression: "\"merge-request\""
+      bindings:
+        - name: revision
+          value: $(body.object_attributes.last_commit.id)
+        - name: repo-url
+          value: $(body.project.http_url)
+        - name: REPONAME
+          value: $(body.project.path_with_namespace)
+        - name: IMAGE
+          value: registry.gitlab.com/$(body.user.name)/$(body.project.name)
+        - name: id
+          value: $(header.X-Gitlab-Event-UUID)
+        - ref: {{ $.Values.pipelineName }}-gitlab
+      template:
+        ref: {{ $.Values.pipelineName }}-gitlab
+
+    - name: release-event-gitlab
+      interceptors:
+      - ref:
+          name: "cel"
+        params:
+          - name: "filter"
+            value: >
+              (
+                header.match('X-Gitlab-Event', 'Release Hook') && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master' || body.ref == 'refs/heads/gh-pages' || body.object_kind == 'release' )
+              )
+          - name: "overlays"
+            value:
+            - key: image_tag
+              expression: "body.tag"
+            - key: event
+              expression: "\"release\""
+
+      bindings:
+        - name: revision
+          value: $(body.commit.id)
+        - name: repo-url
+          value: $(body.project.http_url)
+        - name: REPONAME
+          value: $(body.project.path_with_namespace)
+        - name: IMAGE
+          value: registry.gitlab.com/$(body.body.commit.author.name)/$(body.project.name)
+        - name: id
+          value: $(header.X-Gitlab-Event-UUID)
+        - ref: {{ $.Values.pipelineName }}-gitlab
+      template:
+        ref: {{ $.Values.pipelineName }}-gitlab
+        
+  resources:
+    kubernetesResource:
+      spec:
+        template:
+          spec:
+            serviceAccountName: {{ .Values.pipelineName }}
+            containers:
+              - resources:
+                  requests:
+                    memory: "64Mi"
+                    cpu: "250m"
+                  limits:
+                    memory: "128Mi"
+                    cpu: "500m"

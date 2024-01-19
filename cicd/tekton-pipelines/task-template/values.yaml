@@ -1,0 +1,10 @@
+argocd:
+  server: argo.azureagent.optimizor.app
+  secretName: argocd-secret
+  apps:
+    #application values path
+    valuesPath: ""
+
+qualitytrace:
+   server: http://quality-trace.azureagent.optimizor.app/
+   testFile: test.yaml

@@ -1,0 +1,93 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: {{ $.Values.pipelineName }}-gitlab
+  namespace: {{ $.Values.namespace }}
+spec:
+  params:
+  - name: IMAGETAG
+    value: $(extensions.image_tag)
+  - name: EVENT
+    value: $(extensions.event)
+  - name: rel-tag
+    value: $(extensions.image_tag)
+
+---
+
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: {{ $.Values.pipelineName }}-gitlab
+  namespace: {{ $.Values.namespace }}
+spec:
+  params:
+  - name: repo-url
+    description: repo url
+  - name: revision
+    description: sha,branch
+  - name: IMAGE
+    description: image name
+  - name: IMAGETAG
+    description: tag of img
+  - name: EVENT
+    description: event occured
+  - name: REPONAME
+    description: repo name
+  - name: rel-tag
+    description: release tag
+  - name: id
+    description: pipelinerun id
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1beta1
+    kind: PipelineRun
+    metadata:
+      name: trigger-$(tt.params.id)-gitlab
+    spec:
+      serviceAccountName: {{ $.Values.pipelineName }}
+      pipelineRef:
+        name: {{ $.Values.pipelineName }}-gitlab
+      podTemplate:
+        securityContext:
+          fsGroup: 65532
+      workspaces:
+      - name: shared-data
+        volumeClaimTemplate:
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 30Gi   
+      - name: git-credentials
+        secret:
+          secretName: gitlab-{{ $.Values.pipelineName }}
+      - name: docker-credentials
+        secret:
+          secretName: docker-gitlab-{{ $.Values.pipelineName }}
+      - name: dockerconfig
+        secret:
+          secretName: dockerconfig-{{ $.Values.pipelineName }} # If you need to provide dockerconfig
+      - name: cosign
+        secret:
+          secretName: cosign-key-{{ $.Values.pipelineName }}
+      - name: cosign-pub
+        secret:
+          secretName: cosign-pub-{{ $.Values.pipelineName }}  
+   
+      params:
+      - name: repo-url
+        value: $(tt.params.repo-url)
+      - name: revision
+        value: $(tt.params.revision)
+      - name: imageUrl
+        value: $(tt.params.IMAGE)
+      - name: imageTag
+        value: $(tt.params.IMAGETAG)
+      - name: eventname
+        value: $(tt.params.EVENT)
+      - name: reponame
+        value: $(tt.params.REPONAME)
+      - name: retag
+        value: $(tt.params.rel-tag)
+      - name: ID
+        value: $(tt.params.id)
