@@ -66,8 +66,6 @@ spec:
         value: ghcr.io/$(body.repository.full_name)
       - name: EMAIL
         value: $(body.repository.owner.email)
-      - name: id
-        value: $(header.X-GitHub-Delivery)
       - ref: {{ $.Values.pipelineName }}-github
       template:
         ref: {{ $.Values.pipelineName }}-github
@@ -133,8 +131,6 @@ spec:
           value: $(body.repository.full_name)
         - name: EMAIL
           value: $(body.repository.owner.email)
-        - name: id
-          value: $(header.X-GitHub-Delivery)
         - ref: {{ $.Values.pipelineName }}-github
       template:
         ref: {{ $.Values.pipelineName }}-github
@@ -196,8 +192,6 @@ spec:
         value: $(body.project.path_with_namespace)
       - name: IMAGE
         value: registry.gitlab.com/$(body.user_name)/$(body.project.name)
-      - name: id
-        value: $(header.X-Gitlab-Event-UUID)
       - ref: {{ $.Values.pipelineName }}-gitlab
       template:
         ref: {{ $.Values.pipelineName }}-gitlab
@@ -259,8 +253,6 @@ spec:
           value: $(body.project.path_with_namespace)
         - name: IMAGE
           value: registry.gitlab.com/$(body.body.commit.author.name)/$(body.project.name)
-        - name: id
-          value: $(header.X-Gitlab-Event-UUID)
         - ref: {{ $.Values.pipelineName }}-gitlab
       template:
         ref: {{ $.Values.pipelineName }}-gitlab

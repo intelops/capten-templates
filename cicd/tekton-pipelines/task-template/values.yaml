@@ -1,7 +1,7 @@
 argocd:
   server: argo.azureagent.optimizor.app
   apps:
-    valuesPath: apps/vault-cred/values.yaml
+    valuesPath: 
 
 qualitytrace:
    server: http://quality-trace.azureagent.optimizor.app/
