@@ -21,7 +21,7 @@ spec:
       export COSIGN_PASSWORD=""
       cosign verify --key /workspace/cosign/cosign.pub $(params.image)
     securityContext:
-      privileged: true
+      privileged: false
   workspaces:
   - name: source
   - description: An optional workspace that allows providing a .docker/config.json
