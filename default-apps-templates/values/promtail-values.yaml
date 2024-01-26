@@ -1,0 +1,5 @@
+config:
+  clients:
+  - external_labels:
+      cluster_name: {{.ClusterName}}
+    url: http://loki.{{.DomainName}}/loki/api/v1/push

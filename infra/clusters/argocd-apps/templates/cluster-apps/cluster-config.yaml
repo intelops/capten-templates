@@ -1,23 +1,18 @@
-{{- with .Values.clusters }}
-{{- range . }}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .name }}-cluster
+  name: cluster-config-app
   namespace: {{ $.Release.Namespace }}
 spec:
   project: {{ $.Values.project }}
   source:
     repoURL: {{ $.Values.source.repoURL }}
     targetRevision: {{ $.Values.source.targetRevision }}
-    path: {{ .configPath }}
+    path: {{ $.Values.global.clusterConfigPath }}
   destination:
     server: {{ $.Values.destination.server }}
     namespace: {{ $.Values.destination.namespace }}
   syncPolicy:
     automated:
-      prune: {{ $.Values.syncPolicy.automated.prune }}
-
----
-{{- end }}
-{{- end }}
+      prune: false
+      selfHeal: {{ $.Values.syncPolicy.automated.selfHeal }}

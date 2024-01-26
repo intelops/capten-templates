@@ -1,0 +1,7 @@
+clusterName: {{.ClusterName}}
+nats:
+  host: {{.LoadBalancerHost}}
+  auth:
+    secret:
+      name: "nats-secret"
+      key: "nats-token"

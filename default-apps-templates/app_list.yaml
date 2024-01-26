@@ -1,0 +1,37 @@
+defaultApps:
+  - name: falco
+    repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'
+    namespace: falco
+    chart: falco
+    targetRevision: "0.0.1"
+    valuesPath: infra/clusters/app-configs/{{.ClusterName}}/falco-values.yaml
+  - name: kyverno
+    repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'
+    namespace: kyverno
+    chart: kyverno
+    targetRevision: "1.0.2"
+    valuesPath: infra/clusters/app-configs/{{.ClusterName}}/kyverno-values.yaml
+  - name: prometheus
+    repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'
+    namespace: observability
+    chart: kube-prometheus-stack
+    targetRevision: "1.0.7"
+    valuesPath: infra/clusters/app-configs/{{.ClusterName}}/prometheus-values.yaml
+  - name: promtail
+    repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'
+    namespace: observability
+    chart: promtail
+    targetRevision: "1.0.0"
+    valuesPath: infra/clusters/app-configs/{{.ClusterName}}/promtail-values.yaml
+  - name: kubviz-agent
+    repoURL: 'https://intelops.github.io/kubviz/'
+    namespace: observability
+    chart: agent
+    targetRevision: "1.1.10"
+    valuesPath: infra/clusters/app-configs/{{.ClusterName}}/kubviz-agent-values.yaml
+  - name: external-secrets
+    repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'
+    namespace: external-secrets
+    chart: external-secrets
+    targetRevision: "1.0.0"
+    valuesPath: infra/clusters/app-configs/{{.ClusterName}}/external-secrets-values.yaml  

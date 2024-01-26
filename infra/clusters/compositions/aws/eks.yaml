@@ -9,7 +9,7 @@ spec:
   compositeTypeRef:
     apiVersion: prodready.cluster/v1alpha1
     kind: CompositeCluster
-  writeConnectionSecretsToNamespace: crossplane
+  writeConnectionSecretsToNamespace: crossplane-system
   patchSets:
   - name: metadata
     patches:
@@ -317,7 +317,7 @@ spec:
           egress:
           - fromPort: 0
             toPort: 0
-            ipProtocol: "-1"
+            ipProtocol: tcp
             ipRanges:
             - cidrIp: "0.0.0.0/0"
     patches:
