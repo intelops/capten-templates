@@ -96,7 +96,7 @@ spec:
         - name: "SHA"
           value: "$(params.revision)"
         - name: "TARGET_URL"
-          value: {{ $.Values.tektonDashboard }}
+          value: "http://tekton.{{ $.Values.ingressDomainName }}"
           #value: "dashboard.domain.app"
         - name: "CONTEXT"
           value: "tekton-pipeline"
@@ -125,7 +125,7 @@ spec:
         - name: "SHA"
           value: "$(params.revision)"
         - name: "TARGET_URL"
-          value: {{ $.Values.tektonDashboard }}
+          value: "http://tekton.{{ $.Values.ingressDomainName }}"
           #value: "dashboard.domain.app"
         - name: "CONTEXT"
           value: "tekton-pipeline"

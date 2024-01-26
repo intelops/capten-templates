@@ -8,7 +8,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: {{ $.Values.ingressDomainName }}
+    - host: "tekton.{{ $.Values.ingressDomainName }}"
       http:
         paths:
           - path: "/{{ $.Values.pipelineName }}"
