@@ -1,4 +1,10 @@
 defaultApps:
+  - name: traefik
+    repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'
+    namespace: traefik
+    chart: traefik
+    targetRevision: "1.0.2"
+    valuesPath: infra/clusters/app-configs/{{.ClusterName}}/traefik-values.yaml
   - name: falco
     repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'
     namespace: falco
