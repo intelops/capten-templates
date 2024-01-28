@@ -3,7 +3,7 @@ nats:
   host: {{.LoadBalancerHost}}
   auth:
     secret:
-      name: "vault-nats-secret"
-      key: "nats"
+      name: "nats-token"
+      key: "token"
 persistence:
   enabled: false

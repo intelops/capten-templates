@@ -27,6 +27,7 @@ spec:
   syncPolicy:
     syncOptions:
       - CreateNamespace={{ $.Values.syncPolicy.CreateNamespace }}
+      - ServerSideApply=true  
     automated:
       prune: {{ $.Values.syncPolicy.automated.prune }}
 ---
