@@ -19,8 +19,9 @@ spec:
     #   type: string
   steps:
     - name: cosign-sign
-      image: ghcr.io/kube-tarian/helmrepo-supporting-tools/cosign:2.1.1
+      image: ghcr.io/kube-tarian/helmrepo-supporting-tools/cosign:v2.2.2
       script: |
+        #!/usr/bin/env bash
         mkdir -p ~/.docker/
         export registry=`cat /workspace/dockerconfig/registry`
         export username=`cat /workspace/dockerconfig/username`
