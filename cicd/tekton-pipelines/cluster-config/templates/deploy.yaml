@@ -92,9 +92,9 @@ spec:
       export USERNAME=`cat /workspace/argo-auth/USERNAME`
       export PASSWORD=`cat /workspace/argo-auth/PASSWORD`
 
-      argocd login argo.azureagent.optimizor.app --username $USERNAME --password $PASSWORD --insecure
-      argocd app sync ${ARGOCD_APP_NAME}-$(inputs.params.NAME) --insecure --server argo.azureagent.optimizor.app
-      argocd app wait ${ARGOCD_APP_NAME}-$(inputs.params.NAME) --sync --health --operation --insecure --server argo.azureagent.optimizor.app
+      argocd login argo.azureagent.optimizor.app --username $USERNAME --password $PASSWORD --insecure --grpc-web
+      argocd app sync ${ARGOCD_APP_NAME}-$(inputs.params.NAME) --insecure --server argo.azureagent.optimizor.app --grpc-web
+      argocd app wait ${ARGOCD_APP_NAME}-$(inputs.params.NAME) --sync --health --operation --insecure --server argo.azureagent.optimizor.app --grpc-web
 
   - name: check-argocd-status
     image: ghcr.io/kube-tarian/helmrepo-supporting-tools/argocd:v2.6.15
@@ -107,8 +107,8 @@ spec:
       export USERNAME=`cat /workspace/argo-auth/USERNAME`
       export PASSWORD=`cat /workspace/argo-auth/PASSWORD`
 
-      argocd login argo.azureagent.optimizor.app --username $USERNAME --password $PASSWORD --insecure
-      sync_status=$(argocd app get ${ARGOCD_APP_NAME}-$(inputs.params.NAME) | awk '/Sync Status:/ {print $3}')
+      argocd login argo.azureagent.optimizor.app --username $USERNAME --password $PASSWORD --insecure --grpc-web
+      sync_status=$(argocd app get ${ARGOCD_APP_NAME}-$(inputs.params.NAME) --insecure --server argo.azureagent.optimizor.app --grpc-web | awk '/Sync Status:/ {print $3}')
       echo "Sync Status: $sync_status"
       if [ "$sync_status" = "Synced" ]; then
         echo "Application is successfully synced."
