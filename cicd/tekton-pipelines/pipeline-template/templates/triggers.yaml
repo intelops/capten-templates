@@ -40,7 +40,7 @@ spec:
     description: user email
   - name: id
     description: pipelinerun id
-  - namse: NAME
+  - name: NAME
     description: application name
   resourcetemplates:
   - apiVersion: tekton.dev/v1beta1
