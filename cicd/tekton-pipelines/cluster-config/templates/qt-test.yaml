@@ -32,4 +32,4 @@ spec:
         
         # Configure and Run Quality-trace CLI
         quality-trace configure --endpoint $(params.QT_SERVER)
-        quality-trace run test --file /workspace/output/qt_test/test.yaml
+        quality-trace run test --file /workspace/output/qt_test/test.yaml -o json
