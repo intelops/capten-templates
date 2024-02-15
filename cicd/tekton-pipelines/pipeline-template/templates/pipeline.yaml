@@ -91,7 +91,7 @@ spec:
         value: $(params.imageUrl):$(params.imageTag)
 
   - name: deploy-app
-    runAfter: ["build"]
+    runAfter: ["cosign-sign"]
     taskRef:
       name: deploy
       kind: ClusterTask
