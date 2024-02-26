@@ -41,3 +41,9 @@ defaultApps:
     chart: external-secrets
     targetRevision: "1.0.0"
     valuesPath: infra/clusters/app-configs/{{.ClusterName}}/external-secrets-values.yaml  
+  - name: metrics-server
+    repoURL: 'https://kubernetes-sigs.github.io/metrics-server'
+    namespace: kube-system
+    chart: metrics-server
+    targetRevision: "3.12.0"
+    valuesPath: infra/clusters/app-configs/{{.ClusterName}}/metrics-server-values.yaml 
