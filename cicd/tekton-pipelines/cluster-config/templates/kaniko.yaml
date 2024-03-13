@@ -29,7 +29,7 @@ spec:
       default: []
     - name: BUILDER_IMAGE
       description: The image on which builds will run 
-      default: gcr.io/kaniko-project/executor:v1.20.
+      default: gcr.io/kaniko-project/executor:v1.20.0
   workspaces:
     - name: source
       description: Holds the context and Dockerfile
