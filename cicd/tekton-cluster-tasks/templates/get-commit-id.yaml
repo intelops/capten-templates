@@ -1,0 +1,21 @@
+apiVersion: tekton.dev/v1beta1
+kind: ClusterTask
+metadata:
+  name: get-latest-commit-id
+
+spec:
+  workspaces:
+  - name: source
+
+  steps:
+    - name: get-latest-commit-id
+      image: ghcr.io/kube-tarian/helmrepo-supporting-tools/curl:latest
+      script: |
+        COMMIT_ID=$(curl -s "https://api.github.com/repos/$(params.REPONAME)/commits/$(params.REVISION)" | jq -r '.sha')
+        echo "Latest commit ID is : $COMMIT_ID"
+        echo "$COMMIT_ID"
+        echo -n "$COMMIT_ID" > "$(results.commit-id.path)"
+      workingDir: $(workspaces.source.path)
+  results:
+    - name: commit-id
+      description: "commit id"

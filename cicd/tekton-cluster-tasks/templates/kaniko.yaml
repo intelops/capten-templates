@@ -62,13 +62,6 @@ spec:
     - name: write-url
       workingDir: $(workspaces.source.path)
       image: ghcr.io/kube-tarian/helmrepo-supporting-tools/bash:5.1.4
-      resources:
-        limits:
-          cpu: 100m
-          memory: 200Mi
-        requests:
-          cpu: 2m
-          memory: 5Mi
       script: |
         set -e
         image="$(params.IMAGE)"
