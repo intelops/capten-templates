@@ -1,9 +1,9 @@
 project: default
 
 source:
-  repoURL: https://github.com/intelops/capten-templates.git
+  repoURL: https://github.com/vramk23/infrapub.git
   targetRevision: main
-  
+
 destination:
   server: https://kubernetes.default.svc
 
@@ -13,4 +13,5 @@ syncPolicy:
     prune: false
     selfHeal: true
 
-tektonPath: cicd/tekton-pipelines
+piplelinePath: cicd/tekton-pipelines
+clusterTasksPath: cicd/tekton-cluster-tasks

@@ -1,0 +1,46 @@
+apiVersion: tekton.dev/v1beta1
+kind: ClusterTask
+metadata:
+  name: get-changed-files-task
+spec:
+  params:
+    - name: REVISION
+      description: Git revision to check
+      type: string
+  steps:
+    - name: get-main-branch-commit-id
+      image: ghcr.io/kube-tarian/helmrepo-supporting-tools/build1:latest
+      script: |
+        #!/bin/sh
+        git fetch --quiet origin refs/heads/main:refs/remotes/origin/main
+        main_commit_id=$(git rev-parse origin/main)
+        echo "Commit ID of main branch: $main_commit_id"
+    - name: get-changed-files
+      image: ghcr.io/kube-tarian/helmrepo-supporting-tools/build1:latest
+      script: |
+        #!/bin/sh
+        git config --global --add safe.directory /workspace/source
+        git checkout $(params.REVISION)
+        ls
+        file_list=$(git diff-tree --no-commit-id --name-only -r $(params.REVISION)) 
+        file_new=$(git diff-tree --no-commit-id --name-only -r $(params.REVISION) | sed 's@/.*@@' | sort -u)
+        echo "Files in commit $(params.REVISION):"
+        echo "$file_list"
+        echo "$file_new"
+        echo -n "$file_list" > "$(results.changed-files.path)"
+        echo -n "$file_new" > "$(results.changed-dir.path)"
+
+        # echo "changed files"
+        #cat /workspace/source/changed.txt
+      workingDir: $(workspaces.source.path)
+  results:
+    - name: changed-files
+      description: "List of changed files"
+    - name: changed-dir
+      description: "List of changed files"
+  workspaces:
+    - name: source
+      description: Holds the context and Dockerfile
+
+
+
