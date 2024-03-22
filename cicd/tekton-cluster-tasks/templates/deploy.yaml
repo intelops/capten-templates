@@ -55,7 +55,7 @@ spec:
       VALUES_FILE="${DIRECTORY}/$(inputs.params.NAME)/deployment.yaml"
 
       echo "updating image tag to $(inputs.params.ImageTag)"
-      sed -i "s#$(inputs.params.IMAGE):[a-zA-Z0-9-]*#$(inputs.params.IMAGE):$(inputs.params.ImageTag)#g" "$VALUES_FILE"
+      sed -i "s#$(inputs.params.IMAGE):[a-zA-Z0-9.-]*#$(inputs.params.IMAGE):$(inputs.params.ImageTag)#g" "$VALUES_FILE"
 
       # Update the tag for the structure: tag: ""
       sed -i "s#tag: \"[a-zA-Z0-9]\\+\"#tag: \"$(inputs.params.ImageTag)\"#" "$VALUES_FILE"
