@@ -1,17 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: tekton-cluster-tasks
+  name: tekton-pipelines
   namespace: argo-cd
 spec:
   project: default
   source:
-    repoURL: {{ $.Values.source.repoURL }}
+    repoURL: https://github.com/intelops/capten-templates.git
     targetRevision: main
-    path: cicd/tekton-pipelines/cluster-config
+    path: cicd/tekton-pipelines
     helm:
       valueFiles:
-      - values.yaml
+        - values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: argo-cd

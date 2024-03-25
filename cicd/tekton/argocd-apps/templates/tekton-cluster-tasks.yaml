@@ -1,20 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: tekton-apps
+  name: tekton-cluster-tasks
   namespace: argo-cd
 spec:
   project: default
   source:
     repoURL: https://github.com/intelops/capten-templates.git
     targetRevision: main
-    path: cicd/tekton/argocd-apps
+    path: cicd/tekton-cluster-tasks
     helm:
       valueFiles:
         - values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: argo-cd
-  syncPolicy:
-    automated:
-      prune: true

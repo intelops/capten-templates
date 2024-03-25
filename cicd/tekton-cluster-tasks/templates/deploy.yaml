@@ -45,22 +45,22 @@ spec:
       export gitProjectUrl=`cat /workspace/basic-auth/GIT_PROJECT_URL`
 
       git clone https://${GIT_USERNAME}:${GIT_TOKEN}@${gitProjectUrl} /workspace/source
-
-  - name: update-yaml
-    image: ghcr.io/kube-tarian/helmrepo-supporting-tools/git:v2.26.2
-    workingDir: "/workspace/source"
+      
+  - image: ghcr.io/kube-tarian/helmrepo-supporting-tools/git:v2.26.2
+    name: update-yaml
     script: |
       #!/usr/bin/env sh
       set -e
-     
       export DIRECTORY=`cat /workspace/basic-auth/APP_CONFIG_PATH`
-      VALUES_FILE="${DIRECTORY}/values/$(inputs.params.NAME)-values.yaml"
+      VALUES_FILE="${DIRECTORY}/$(inputs.params.NAME)/deployment.yaml"
 
       echo "updating image tag to $(inputs.params.ImageTag)"
-      sed -i "s#$(inputs.params.IMAGE):[a-zA-Z0-9]\\+#$(inputs.params.IMAGE):$(inputs.params.ImageTag)#" "$VALUES_FILE"
-      
+      sed -i "s#$(inputs.params.IMAGE):[a-zA-Z0-9.-]*#$(inputs.params.IMAGE):$(inputs.params.ImageTag)#g" "$VALUES_FILE"
+
       # Update the tag for the structure: tag: ""
-      sed -E -i "s#(tag:)\s*\"?[^\"]*\"?#\1 \"$(inputs.params.ImageTag)\"#" "$VALUES_FILE"
+      sed -i "s#tag: \"[a-zA-Z0-9]\\+\"#tag: \"$(inputs.params.ImageTag)\"#" "$VALUES_FILE"
+    workingDir: /workspace/source
+
 
   - name: commit-push-changes-gitops
     image: ghcr.io/kube-tarian/helmrepo-supporting-tools/git:v2.26.2
@@ -93,8 +93,8 @@ spec:
       export PASSWORD=`cat /workspace/argo-auth/PASSWORD`
 
       echo "y" | argocd login ${ARGOCD_SERVER} --username $USERNAME --password $PASSWORD --insecure --grpc-web
-      argocd app sync ${ARGOCD_APP_NAME}-$(inputs.params.NAME) --insecure --server ${ARGOCD_SERVER} --grpc-web
-      argocd app wait ${ARGOCD_APP_NAME}-$(inputs.params.NAME) --sync --health --operation --insecure --server ${ARGOCD_SERVER} --grpc-web
+      argocd app sync ${ARGOCD_APP_NAME}-$(inputs.params.AppName) --insecure --server ${ARGOCD_SERVER} --grpc-web
+      argocd app wait ${ARGOCD_APP_NAME}-$(inputs.params.AppName) --sync --health --operation --insecure --server ${ARGOCD_SERVER} --grpc-web
 
   - name: check-argocd-status
     image: ghcr.io/kube-tarian/helmrepo-supporting-tools/argocd:v2.6.15
@@ -108,7 +108,7 @@ spec:
       export PASSWORD=`cat /workspace/argo-auth/PASSWORD`
 
       echo "y" | argocd login ${ARGOCD_SERVER} --username $USERNAME --password $PASSWORD --insecure --grpc-web
-      sync_status=$(argocd app get ${ARGOCD_APP_NAME}-$(inputs.params.NAME) --insecure --server ${ARGOCD_SERVER} --grpc-web | awk '/Sync Status:/ {print $3}')
+      sync_status=$(argocd app get ${ARGOCD_APP_NAME}-$(inputs.params.AppName) --insecure --server ${ARGOCD_SERVER} --grpc-web | awk '/Sync Status:/ {print $3}')
       echo "Sync Status: $sync_status"
       if [ "$sync_status" = "Synced" ]; then
         echo "Application is successfully synced."

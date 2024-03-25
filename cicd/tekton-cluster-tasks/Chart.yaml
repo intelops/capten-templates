@@ -1,5 +1,5 @@
 apiVersion: v2
-name: tekton-pipeline-cluster-config
+name: tekton-cluster-tasks
 description: A Helm chart for tekton pipeline
 
 # A chart can be either an 'application' or a 'library' chart.
