@@ -6,4 +6,4 @@ nats:
       name: "nats-token"
       key: "token"
 persistence:
-  enabled: false
+  enabled: true

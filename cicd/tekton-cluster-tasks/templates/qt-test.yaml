@@ -24,6 +24,8 @@ spec:
   params:
   - name: QT_SERVER
     description: server URL of quality-trace
+  - name: qt_path
+    description: qt path
 
   steps:
     - name: install-and-run-qt
@@ -32,4 +34,4 @@ spec:
         
         # Configure and Run Quality-trace CLI
         quality-trace configure --endpoint $(params.QT_SERVER)
-        quality-trace run test --file /workspace/output/qt_test/test.yaml -o json
+        quality-trace run test --file /workspace/output/$(params.qt_path)/test.yaml -o json
