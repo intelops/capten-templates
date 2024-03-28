@@ -15,6 +15,9 @@ spec:
         git config --global --add safe.directory /workspace/source
         git checkout $(params.REVISION)
         ls
+        commit_email=$(git show -s --format='%ae' $(params.REVISION))
+        echo -n "$commit_email"
+        echo -n "$commit_email" > "$(results.email.path)"
         file_list=$(git diff-tree --no-commit-id --name-only -r $(params.REVISION)) 
         file_new=$(git diff-tree --no-commit-id --name-only -r $(params.REVISION) | sed 's@/.*@@' | sort -u)
         echo "Files in commit $(params.REVISION):"
