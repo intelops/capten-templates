@@ -31,6 +31,8 @@ spec:
       description: "List of changed files"
     - name: changed-dir
       description: "List of changed files"
+    - name: email
+      description: "email"
   workspaces:
     - name: source
       description: Holds the context and Dockerfile
