@@ -11,6 +11,12 @@ spec:
   - name: userEmail  
     description: "User email for Git configuration"
     type: string
+  - name: gitProjectUrl
+    description: "User project repo url"
+  - name: appConfigPath
+    description: "User application config path"
+  - name: clusterName
+    description: "name of the cluster"
   workspaces:
   - name: output
     description: The git repo will be cloned onto the volume backing this Workspace.
@@ -38,20 +44,24 @@ spec:
   
   - name: clone-repo
     image: ghcr.io/kube-tarian/helmrepo-supporting-tools/git:v2.26.2
+    env:
+    - name: GIT_PROJECT_URL
+      value: $(params.gitProjectUrl)
     script: |
       echo "Cloning the repository..."
       export GIT_USERNAME=`cat /workspace/basic-auth/GIT_USER_NAME`
       export GIT_TOKEN=`cat /workspace/basic-auth/GIT_TOKEN`
-      export gitProjectUrl=`cat /workspace/basic-auth/GIT_PROJECT_URL`
 
-      git clone https://${GIT_USERNAME}:${GIT_TOKEN}@${gitProjectUrl} /workspace/source
+      git clone https://${GIT_USERNAME}:${GIT_TOKEN}@${GIT_PROJECT_URL} /workspace/source
       
   - image: ghcr.io/kube-tarian/helmrepo-supporting-tools/git:v2.26.2
     name: update-yaml
+    env:
+    - name: DIRECTORY
+      value: $(params.appConfigPath)
     script: |
       #!/usr/bin/env sh
       set -e
-      export DIRECTORY=`cat /workspace/basic-auth/APP_CONFIG_PATH`
       VALUES_FILE="${DIRECTORY}/$(inputs.params.NAME)/values.yaml"
 
       echo "updating image tag to $(inputs.params.ImageTag)"
@@ -82,12 +92,14 @@ spec:
 
   - name: wait-for-argocd-rollout
     image: ghcr.io/kube-tarian/helmrepo-supporting-tools/argocd:v2.6.15
+    env:
+    - name: ARGOCD_APP_NAME
+      value: $(params.clusterName)
     script: |
       #!/usr/bin/env sh
       set -e
       
       export ARGOCD_SERVER=`cat /workspace/argo-auth/SERVER_URL`
-      export ARGOCD_APP_NAME=`cat /workspace/basic-auth/CLUSTER_NAME`
       export USERNAME=`cat /workspace/argo-auth/USERNAME`
       export PASSWORD=`cat /workspace/argo-auth/PASSWORD`
 
@@ -97,12 +109,14 @@ spec:
 
   - name: check-argocd-status
     image: ghcr.io/kube-tarian/helmrepo-supporting-tools/argocd:v2.6.15
+    env:
+    - name: ARGOCD_APP_NAME
+      value: $(params.clusterName)
     script: |
       #!/usr/bin/env sh
       set -e
 
       export ARGOCD_SERVER=`cat /workspace/argo-auth/SERVER_URL`
-      export ARGOCD_APP_NAME=`cat /workspace/basic-auth/CLUSTER_NAME`
       export USERNAME=`cat /workspace/argo-auth/USERNAME`
       export PASSWORD=`cat /workspace/argo-auth/PASSWORD`
 
