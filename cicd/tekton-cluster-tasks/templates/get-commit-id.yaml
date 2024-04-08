@@ -6,12 +6,14 @@ metadata:
 spec:
   workspaces:
   - name: source
+  - name: basic-auth
 
   steps:
     - name: get-latest-commit-id
       image: ghcr.io/kube-tarian/helmrepo-supporting-tools/curl:latest
       script: |
-        COMMIT_ID=$(curl -s "https://api.github.com/repos/$(params.REPONAME)/commits/$(params.REVISION)" | jq -r '.sha')
+        export TOKEN=`cat /workspace/basic-auth/password`
+        COMMIT_ID=$(curl -s -H "Authorization: token ${TOKEN}" "https://api.github.com/repos/$(params.REPONAME)/commits/$(params.REVISION)" | jq -r '.sha')
         echo "Latest commit ID is : $COMMIT_ID"
         echo "$COMMIT_ID"
         echo -n "$COMMIT_ID" > "$(results.commit-id.path)"
