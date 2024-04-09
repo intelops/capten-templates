@@ -14,19 +14,19 @@ spec:
     - name: image
       description: "The image to be signed by cosign."
       type: string
-    # - name: COSIGN_RELEASE
-    #   description: "The cosign release version to install."
-    #   type: string
+    - name: registry
+      description: "registry"
+      type: string
+    
   steps:
     - name: cosign-sign
       image: ghcr.io/kube-tarian/helmrepo-supporting-tools/cosign:v2.2.2
       script: |
         #!/usr/bin/env bash
         mkdir -p ~/.docker/
-        export registry=`cat /workspace/dockerconfig/registry`
         export username=`cat /workspace/dockerconfig/username`
         export password=`cat /workspace/dockerconfig/password`
-        cosign login $registry -u $username -p $password
+        cosign login $(params.registry) -u $username -p $password
         export COSIGN_PASSWORD=""
         cosign sign -y --key /workspace/cosign/cosign.key $(params.image)
       securityContext:
