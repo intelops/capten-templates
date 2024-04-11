@@ -11,14 +11,16 @@ spec:
   steps:
   - image: ghcr.io/kube-tarian/helmrepo-supporting-tools/cosign:v2.2.2
     name: cosign-sign
+  - name: registry
+    description: "registry"
+    type: string
     resources: {}
     script: |
       #!/usr/bin/env bash
       mkdir -p ~/.docker/
-      export registry=`cat /workspace/dockerconfig/registry`
       export username=`cat /workspace/dockerconfig/username`
       export password=`cat /workspace/dockerconfig/password`
-      cosign login $registry -u $username -p $password
+      cosign login $(params.registry) -u $username -p $password
       export COSIGN_PASSWORD=""
       cosign verify --key /workspace/cosign/cosign.pub $(params.image)
     securityContext:
