@@ -1,0 +1,23 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  annotations:
+    tekton.dev/git-0: "https://github.com"
+  name: gitcred-external
+  namespace: tekton-pipelines
+spec:
+  refreshInterval: "10s"
+  secretStoreRef:
+    name: vault-root-store
+    kind: ClusterSecretStore
+  target:
+    name: gitcred-capten-pipeline
+  data:
+  - secretKey: password
+    remoteRef:
+      key: secret/generic/git-project/93ec4bd2-d7a6-4260-86e3-df1fe550ec74
+      property: accessToken
+  - secretKey: username
+    remoteRef:
+      key: secret/generic/git-project/93ec4bd2-d7a6-4260-86e3-df1fe550ec74
+      property: userID

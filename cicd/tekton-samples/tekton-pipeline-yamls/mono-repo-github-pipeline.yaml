@@ -1,0 +1,280 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: mono-capten-pipeline
+  namespace: tekton-pipelines
+spec:
+  description: |
+    This pipeline clones a git repo, then echoes the README file to the stout.
+  params:
+  - name: repo-url
+    type: string 
+    description: The git repo URL to clone from.
+  - name: revision
+    type: string
+  - name: PARAM_SCM
+    description: Define the Source code Management URL
+    type: string
+    default: "github.com"    
+  - name: pathToContext
+    description: The path to the build context, used by Kaniko - within the workspace
+    default: .
+  - name: imageUrl
+    description: Image name including repository
+  - name: imageTag
+    description: Image tag
+    default: "latest"
+  - name: eventname
+    description: name of event happens
+  - name: reponame
+    description: repo name
+  - name: retag
+    description: rel tag
+  - name: ID
+    description: id of pipelinerun
+  - name: NAME
+    description: application name
+ 
+  workspaces:
+  - name: shared-data
+    description: |
+      This workspace contains the cloned repo files, so they can be read by the
+      next task.
+  - name: git-credentials
+    description: basic-auth
+  - name: docker-credentials
+    description: docker cred
+  - name: cosign
+  - name: dockerconfig
+  - name: cosign-pub
+  - name: deploy-creds
+    description: app and cluster details
+  - name: argo-cred
+    description: argocd server and credentials
+
+  tasks:
+  - name: fetch-source
+    taskRef:
+      name: git-clone
+      kind: ClusterTask
+    workspaces:
+    - name: output
+      workspace: shared-data
+    - name: basic-auth
+      workspace: git-credentials
+    params:
+    - name: url
+      value: $(params.repo-url)
+    - name: PARAM_SCM
+      value: $(params.PARAM_SCM)
+    - name: revision
+      value: $(params.revision)
+    when:
+    - input: "$(params.eventname)"
+      operator: in
+      values: [ "pull-request" , "push" , "tag" ,"release" ]
+
+  - name: get-changed-files
+    taskRef:
+      name: get-changed-files-task
+      kind: ClusterTask
+    runAfter:
+      - fetch-source
+    workspaces:
+    - name: source
+      workspace: shared-data
+    params:
+    - name: REVISION
+      value: $(params.revision)
+    when:
+    - input: "$(params.eventname)"
+      operator: in
+      values: [ "pull-request" , "push" , "tag" ,"release" ]
+
+  - name: build
+    taskRef:
+      name: kaniko
+      kind: ClusterTask
+    runAfter:
+      - get-changed-files
+    workspaces:
+      - name: source
+        workspace: shared-data
+      - name: dockerconfig
+        workspace: docker-credentials
+    params:
+      - name: CONTEXT
+        value: $(tasks.get-changed-files.results.changed-dir)/ 
+      - name: IMAGE
+        value: $(params.imageUrl)/$(tasks.get-changed-files.results.changed-dir):$(params.imageTag)
+      - name: DOCKERFILE
+        value: $(tasks.get-changed-files.results.changed-dir)/Dockerfile
+      - name: REVISION
+        value: $(params.revision)
+      - name: changed
+        value: $(tasks.get-changed-files.results.changed-files)
+    when:
+    - input: "$(params.eventname)"
+      operator: in
+      values: [ "pull-request" , "push" , "tag" ,"release" ]
+
+
+  - name: deploy-app
+    runAfter: ["cosign-sign"]
+    taskRef:
+      name: deploy
+      kind: ClusterTask
+    params:
+      - name: NAME
+        value: $(params.NAME)/$(tasks.get-changed-files.results.changed-dir)
+      - name: userEmail 
+        value: $(params.userEmail)
+      - name: IMAGE
+        value: $(params.imageUrl)/$(tasks.get-changed-files.results.changed-dir)
+      - name: ImageTag
+        value: $(params.imageTag)
+      - name: AppName
+        value: $(params.NAME)-$(tasks.get-changed-files.results.changed-dir)
+      - name: gitProjectUrl
+        value: github.com/Jeremy4040/infra
+      - name: appConfigPath
+        value: infra/clusters/app-configs/dev-alpha/apps/customer-apps
+      - name: clusterName
+        value: dev-alpha
+ 
+    workspaces:
+      - name: basic-auth
+        workspace: deploy-creds
+      - name: output
+        workspace: shared-data
+      - name: argo-auth
+        workspace: argo-cred
+    when:
+      - input: "$(params.eventname)"
+        operator: in
+        values: [ "pull-request" , "tag" ,"release" ]
+
+  - name: qt-testcase
+    runAfter: ["deploy-app"]
+    taskRef:
+      name: install-and-run-qt
+      kind: ClusterTask
+    params:
+    - name: QT_SERVER
+      value: http://quality-trace.aws.optimizor.app/
+    - name: qt_path
+      value: $(tasks.get-changed-files.results.changed-dir)/qt_test
+    workspaces:
+    - name: basic-auth
+      workspace: git-credentials
+    - name: output
+      workspace: shared-data
+    when:
+    - input: "$(params.eventname)"
+      operator: in
+      values: [ "pull-request" , "tag" ,"release" ]
+
+  - name: cosign-sign
+    runAfter: ["build"]
+    taskRef:
+      name: cosign-sign
+      kind: ClusterTask
+    workspaces:
+    - name: source
+      workspace: shared-data
+    - name: dockerconfig
+      workspace: dockerconfig
+    - name: cosign
+      workspace: cosign
+    params:
+    - name: image
+      value: "$(params.imageUrl)/$(tasks.get-changed-files.results.changed-dir)@$(tasks.build.results.IMAGE_DIGEST)"
+    - name: eventname
+      value: "$(params.eventname)"
+    - name: registry
+      value: "ghcr.io"
+    when:
+    - input: "$(params.eventname)"
+      operator: in
+      values: [ "pull-request" , "tag" , "release" ]
+  - name: commit-task
+    taskRef:
+      name: get-latest-commit-id
+      kind: ClusterTask
+    runAfter:
+    -  build
+    workspaces:
+    - name: source
+      workspace: shared-data
+    - name: basic-auth
+      workspace: git-credentials
+
+    params:
+    - name: REVISION
+      value: $(params.revision)
+    - name: REPONAME
+      value: $(params.reponame)
+   
+    when:
+    - input: "$(params.eventname)"
+      operator: in
+      values: [ "tag" ,"push" ,"pull-request" ,"release"]
+
+  finally:
+    - name: github-set-status-fail
+      when:
+      - input: $(tasks.status)
+        operator: in
+        values: [ "Failed", "None" ] 
+      taskRef:
+        name: github-set-status
+        kind: ClusterTask
+      params:
+        - name: "STATE"
+          value: "failure"
+        - name: "GITHUB_HOST_URL"
+          value: "api.github.com"
+        - name: "REPO_FULL_NAME"
+          value: "$(params.reponame)"
+        - name: "GITHUB_TOKEN_SECRET_NAME"
+          value: "gitcred-capten-pipeline"
+        - name: "GITHUB_TOKEN_SECRET_KEY"
+          value: "password"
+        - name: "SHA"
+          #value: "$(params.revision)"
+          value: "$(tasks.commit-task.results.commit-id)"
+        - name: "TARGET_URL"
+          value: "http://tekton.aws.optimizor.app/#/namespaces/tekton-pipelines/pipelineruns/trigger-$(params.ID)"
+        - name: "CONTEXT"
+          value: "tekton-pipeline"
+        - name: "DESCRIPTION"
+          value: "An error occurred building your commit in Tekton"
+
+    - name: github-set-status-success
+      when:
+      - input: $(tasks.status)
+        operator: in
+        values: [ "Succeeded", "Completed" ] 
+      taskRef:
+        name: github-set-status
+        kind: ClusterTask
+      params:
+        - name: "STATE"
+          value: "success"
+        - name: "GITHUB_HOST_URL"
+          value: "api.github.com"
+        - name: "REPO_FULL_NAME"
+          value: "$(params.reponame)"
+        - name: "GITHUB_TOKEN_SECRET_NAME"
+          value: "gitcred-capten-pipeline"
+        - name: "GITHUB_TOKEN_SECRET_KEY"
+          value: "password"
+        - name: "SHA"
+          value: "$(tasks.commit-task.results.commit-id)"
+        - name: "TARGET_URL"
+          value: "http://tekton.aws.optimizor.app/#/namespaces/tekton-pipelines/pipelineruns/trigger-$(params.ID)"
+        - name: "CONTEXT"
+          value: "tekton-pipeline"
+        - name: "DESCRIPTION"
+          value: "Finished building your commit in Tekton"
+

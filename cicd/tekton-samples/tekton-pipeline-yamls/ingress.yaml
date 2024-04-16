@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: capten-pipeline
+  namespace: tekton-pipelines
+  annotations:
+    traefik.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: letsencrypt-prod-cluster
+    kubernetes.io/force-ssl-redirect: "true"
+    kubernetes.io/ssl-redirect: "true"
+    kubernetes.io/tls-acme: "true"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: "tekton.awsagent.optimizor.app"
+      http:
+        paths:
+          - path: "/capten-pipeline"
+            pathType: Prefix
+            backend:
+              service:
+                name: "el-capten-pipeline"
+                port:
+                  number: 8080

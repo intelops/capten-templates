@@ -1,0 +1,279 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: capten-pipeline-gitlab
+  namespace: tekton-pipelines
+spec:
+  description: |
+    This pipeline clones a git repo, then echoes the README file to the stout.
+  finally:
+  - name: gitlab-set-status-fail
+    params:
+    - name: STATE
+      value: failed
+    - name: GITLAB_HOST_URL
+      value: gitlab.com
+    - name: REPO_FULL_NAME
+      value: $(params.reponame)
+    - name: GITLAB_TOKEN_SECRET_NAME
+      value: gitcred-capten-pipeline-gitlab
+    - name: GITLAB_TOKEN_SECRET_KEY
+      value: password
+    - name: SHA
+      value: $(params.revision)
+    - name: TARGET_URL
+      value: http://tekton.awsagent.optimizor.app/#/namespaces/tekton-pipelines/pipelineruns/trigger-$(params.ID)
+    - name: CONTEXT
+      value: Building your MR
+    - name: DESCRIPTION
+      value: continuous-integration/tekton
+    taskRef:
+      kind: ClusterTask
+      name: gitlab-set-status
+    when:
+    - input: $(tasks.status)
+      operator: in
+      values:
+      - Failed
+      - None
+  - name: gitlab-set-status-success
+    params:
+    - name: STATE
+      value: success
+    - name: GITLAB_HOST_URL
+      value: gitlab.com
+    - name: API_PATH_PREFIX
+      value: /api/v4
+    - name: REPO_FULL_NAME
+      value: $(params.reponame)
+    - name: GITLAB_TOKEN_SECRET_NAME
+      value: gitcred-capten-pipeline-gitlab
+    - name: GITLAB_TOKEN_SECRET_KEY
+      value: password
+    - name: SHA
+      value: $(params.revision)
+    - name: TARGET_URL
+      value: http://tekton.awsagent.optimizor.app/#/namespaces/tekton-pipelines/pipelineruns/trigger-$(params.ID)
+    - name: CONTEXT
+      value: tekton-pipeline
+    - name: DESCRIPTION
+      value: Finished building your commit in Tekton
+    taskRef:
+      kind: ClusterTask
+      name: gitlab-set-status
+    when:
+    - input: $(tasks.status)
+      operator: in
+      values:
+      - Succeeded
+      - Completed
+  params:
+  - description: The git repo URL to clone from.
+    name: repo-url
+    type: string
+  - name: revision
+    type: string
+  - default: gitlab.com
+    description: Define the Source code Management URL
+    name: PARAM_SCM
+    type: string
+  - default: .
+    description: The path to the build context, used by Kaniko - within the workspace
+    name: pathToContext
+    type: string
+  - description: Image name including repository
+    name: imageUrl
+    type: string
+  - default: latest
+    description: Image tag
+    name: imageTag
+    type: string
+  - description: name of event happens
+    name: eventname
+    type: string
+  - description: repo name
+    name: reponame
+    type: string
+  - description: rel tag
+    name: retag
+    type: string
+  - description: application name
+    name: NAME
+    type: string
+  - description: id
+    name: ID
+    type: string
+  tasks:
+  - name: fetch-source
+    params:
+    - name: url
+      value: $(params.repo-url)
+    - name: PARAM_SCM
+      value: $(params.PARAM_SCM)
+    - name: revision
+      value: $(params.revision)
+    taskRef:
+      kind: ClusterTask
+      name: git-clone
+    when:
+    - input: $(params.eventname)
+      operator: in
+      values:
+      - merge-request
+      - push
+      - tag
+      - release
+    workspaces:
+    - name: output
+      workspace: shared-data
+    - name: basic-auth
+      workspace: git-credentials
+  - name: get-changed-files
+    params:
+    - name: REVISION
+      value: $(params.revision)
+    runAfter:
+    - fetch-source
+    taskRef:
+      kind: ClusterTask
+      name: get-changed-files-task
+    when:
+    - input: $(params.eventname)
+      operator: in
+      values:
+      - merge-request
+      - push
+      - tag
+      - release
+    workspaces:
+    - name: source
+      workspace: shared-data
+  - name: build
+    params:
+    - name: CONTEXT
+      value: $(params.pathToContext)
+    - name: IMAGE
+      value: $(params.imageUrl):$(params.imageTag)
+    runAfter:
+    - get-changed-files
+    taskRef:
+      kind: ClusterTask
+      name: kaniko
+    when:
+    - input: $(params.eventname)
+      operator: in
+      values:
+      - merge-request
+      - push
+      - tag
+      - release
+    workspaces:
+    - name: source
+      workspace: shared-data
+    - name: dockerconfig
+      workspace: docker-credentials
+  - name: deploy-app
+    params:
+    - name: NAME
+      value: $(params.NAME)
+    - name: userEmail
+      value: $(tasks.get-changed-files.results.email)
+    - name: IMAGE
+      value: $(params.imageUrl)
+    - name: ImageTag
+      value: $(params.imageTag)
+    - name: AppName
+      value: $(params.NAME)
+    - name: gitProjectUrl
+      value: gitlab.com/sheril5/infra
+    - name: appConfigPath
+      value: infra/clusters/app-configs/dev-alpha/apps/customer-apps
+    - name: clusterName
+      value: dev-alpha
+    runAfter:
+    - cosign-sign
+    taskRef:
+      kind: ClusterTask
+      name: helm-deploy
+    when:
+    - input: $(params.eventname)
+      operator: in
+      values:
+      - merge-request
+      - tag
+      - push
+      - release
+    workspaces:
+    - name: basic-auth
+      workspace: deploy-creds
+    - name: output
+      workspace: shared-data
+    - name: argo-auth
+      workspace: argo-creds
+  - name: qt-testcase
+    params:
+    - name: QT_SERVER
+      value: http://quality-trace.awsagent.optimizor.app
+    - name: qt_path
+      value: qt_test
+    runAfter:
+    - deploy-app
+    taskRef:
+      kind: ClusterTask
+      name: install-and-run-qt
+    when:
+    - input: $(params.eventname)
+      operator: in
+      values:
+      - merge-request
+      - tag
+      - release
+      - push
+    workspaces:
+    - name: basic-auth
+      workspace: git-credentials
+    - name: output
+      workspace: shared-data
+  - name: cosign-sign
+    params:
+    - name: image
+      value: $(params.imageUrl)@$(tasks.build.results.IMAGE_DIGEST)
+    - name: eventname
+      value: $(params.eventname)
+    - name: registry
+      value: registry.gitlab.com
+    runAfter:
+    - build
+    taskRef:
+      kind: ClusterTask
+      name: cosign-sign
+    when:
+    - input: $(params.eventname)
+      operator: in
+      values:
+      - merge-request
+      - tag
+      - release
+      - push
+    workspaces:
+    - name: source
+      workspace: shared-data
+    - name: dockerconfig
+      workspace: dockerconfig
+    - name: cosign
+      workspace: cosign-keys
+  workspaces:
+  - description: |
+      This workspace contains the cloned repo files, so they can be read by the
+      next task.
+    name: shared-data
+  - description: basic-auth
+    name: git-credentials
+  - description: docker cred
+    name: docker-credentials
+  - name: cosign-keys
+  - name: dockerconfig
+  - description: app and cluster details
+    name: deploy-creds
+  - description: argocd server and credentials
+    name: argo-creds

@@ -1,0 +1,28 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  annotations:
+    tekton.dev/git-0: "https://gitlab.com"
+  name: cosign-docker-external
+  namespace: tekton-pipelines
+spec:
+  refreshInterval: "10s"
+  secretStoreRef:
+    name: vault-root-store
+    kind: ClusterSecretStore
+  target:
+    name: cosign-docker-secret-capten-pipeline-gitlab
+  data:
+  - secretKey: password
+    remoteRef:
+      key: generic/container-registry/f41c8396-df4e-46e8-a617-e5ad4613114d
+      property: password
+      #- secretKey: registry
+      #value: registry.gitlab.com
+    #remoteRef:
+    # key: generic/container-registry/d90b9e02-aec1-49ac-b54e-b35c7941ef31
+    # property: registry
+  - secretKey: username
+    remoteRef:
+      key: generic/container-registry/f41c8396-df4e-46e8-a617-e5ad4613114d
+      property: username
