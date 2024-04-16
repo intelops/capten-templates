@@ -1,0 +1,24 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  annotations:
+    tekton.dev/git-0: https://gitlab.com
+  name: extraconfig-external
+  namespace: tekton-pipelines
+spec:
+  refreshInterval: "10s"
+  secretStoreRef:
+    name: vault-root-store
+    kind: ClusterSecretStore
+  target:
+    name: extraconfig-capten-pipeline-gitlab
+  data:
+  - secretKey: GIT_TOKEN
+    remoteRef:
+      key: generic/git-project/10c21385-91db-4dbe-851d-ec024f4e4975
+      property: accessToken
+  - secretKey: GIT_USER_NAME
+    remoteRef:
+      key: generic/git-project/10c21385-91db-4dbe-851d-ec024f4e4975
+      property: userID
+

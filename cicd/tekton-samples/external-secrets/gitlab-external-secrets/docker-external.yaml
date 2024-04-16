@@ -1,0 +1,17 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: docker-external
+  namespace: tekton-pipelines
+spec:
+  refreshInterval: "10s"
+  secretStoreRef:
+    name: vault-root-store
+    kind: ClusterSecretStore
+  target:
+    name: docker-credentials-capten-pipeline-gitlab
+  data:
+  - secretKey: config.json
+    remoteRef:
+      key: secret/generic/tekton/docker-credentials-demo-capten-pipeline
+      property: config.json

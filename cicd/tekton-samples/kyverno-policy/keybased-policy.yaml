@@ -1,0 +1,28 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-image
+spec:
+  validationFailureAction: Audit
+  background: false
+  webhookTimeoutSeconds: 30
+  failurePolicy: Fail
+  rules:
+    - name: check-image
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      verifyImages:
+        - imageReferences:
+            - "registry.gitlab.com/sheril5/qt-test-application*"
+          attestors:
+            - count: 1
+              entries:
+                - keys:
+                    publicKeys: "k8s://kyverno/cosign.pub"
+          mutateDigest: false
+          verifyDigest: false
+
+                        

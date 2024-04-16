@@ -1,0 +1,20 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: cosign-external
+spec:
+  refreshInterval: "10s"
+  secretStoreRef:
+    name: vault-store
+    kind: SecretStore
+  target:
+    name: cosign-key-secret
+  data:
+  - secretKey: cosign.pub
+    remoteRef:
+      key: secret/generic/key/cosign
+      property: cosign.pub
+  - secretKey: password
+    remoteRef:
+      key: secret/generic/key/cosign
+      property: password
