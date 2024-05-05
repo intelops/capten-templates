@@ -1,0 +1,481 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: capten-pipeline
+  namespace: tekton-pipelines
+spec:
+  serviceAccountName: capten-pipeline
+  triggers:
+    - name: github-push-event
+      interceptors:
+        - ref:
+            name: "cel"
+          params:
+            - name: "filter"
+              value: >
+                (
+                  header.match('x-github-event', 'push')  && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master')
+                )
+            - name: "overlays"
+              value:
+              - key: image_tag
+                expression: "\"latest\""
+              - key: event
+                expression: "\"push\"" 
+      bindings:
+        - name: revision
+          value: $(body.comits[0].id)
+        - name: repo-url
+          value: $(body.repository.clone_url)
+        - name: IMAGE
+          value: ghcr.io/$(body.repository.full_name)
+        - name: REPONAME
+          value: $(body.repository.full_name)
+        - name: id
+          value: $(header.X-GitHub-Delivery)
+        - name: NAME
+          value: $(body.repository.name)
+        - ref: capten-pipeline
+      template:
+        ref: capten-pipeline
+    - name: gitlab-push-event
+      interceptors:
+        - ref:
+            name: "cel"
+          params:
+            - name: "filter"
+              value: >
+                (
+                    header.match('X-Gitlab-Event', 'Push Hook') && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master')
+                )
+            - name: "overlays"
+              value:
+              - key: image_tag
+                expression: "\"latest\""
+              - key: event
+                expression: "body.event_name"
+
+      bindings:
+      - name: revision
+        value: $(body.commits[0].id)
+      - name: repo-url
+        value: $(body.project.git_http_url)
+      - name: REPONAME
+        value: $(body.project.path_with_namespace)
+      - name: IMAGE
+        value: registry.gitlab.com/$(body.user_name)/$(body.project.name)
+      - name: projectid
+        value: $(body.project.id)
+      - name: id
+        value: $(header.X-Gitlab-Event-UUID)
+      - name: NAME
+        value: $(body.project.name)
+      - ref: capten-pipeline
+      template:
+        ref: gitlab-capten-pipeline
+        
+    - name: merge-request-gitlab
+      interceptors:
+        - ref:
+            name: "cel"
+          params:
+            - name: "filter"
+              value: >
+                (
+                  header.match('X-Gitlab-Event', 'Merge Request Hook') && (body.object_attributes.action in ['open'] || body.object_attributes.action in ['reopen']) && ( body.object_attributes.target_branch == 'main' || body.object_attributes.target_branch == 'master' )
+                )
+            - name: "overlays"
+              value:
+              - key: image_tag
+                expression: "['mr', string(body.object_attributes.iid)].join('-')"
+              - key: event
+                expression: "\"merge-request\""
+
+      bindings:
+        - name: revision
+          value: $(body.object_attributes.last_commit.id)
+        - name: repo-url
+          value: $(body.project.http_url)
+        - name: REPONAME
+          value: $(body.project.path_with_namespace)
+        - name: IMAGE
+          value: registry.gitlab.com/$(body.user.name)/$(body.project.name)
+        - name: id
+          value: $(header.X-Gitlab-Event-UUID)
+        - name: NAME
+          value: $(body.project.name)
+        - ref: capten-pipeline
+
+      template:
+        ref: gitlab-capten-pipeline
+
+    - name: tag-event-gitlab
+      interceptors:
+        - ref:
+            name: "cel"
+          params:
+            - name: "filter"
+              value: >
+                (
+                  header.match('X-Gitlab-Event', 'Tag Push Hook') && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master' || body.object_kind == 'tag_push'  )
+                )
+            - name: "overlays"
+              value:
+              - key: image_tag
+                expression: "body.ref.split('/')[2]"
+              - key: event
+                expression: "\"tag\""
+      bindings:
+      - name: revision
+        value: $(body.commits[0].id)
+      - name: repo-url
+        value: $(body.repository.git_http_url)
+      - name: REPONAME
+        value: $(body.project.path_with_namespace)
+      - name: id
+        value: $(header.X-Gitlab-Event-UUID)
+      - name: IMAGE
+        value: registry.gitlab.com/$(body.commits[0].author.name)/$(body.project.name)
+      - name: NAME
+        value: $(body.project.name)
+      - ref: capten-pipeline
+      template:
+        ref: gitlab-capten-pipeline
+
+    - name: release-event-gitlab
+      interceptors:
+      - ref:
+          name: "cel"
+        params:
+          - name: "filter"
+            value: >
+              (
+                header.match('X-Gitlab-Event', 'Release Hook') && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master' || body.ref == 'refs/heads/gh-pages' || body.object_kind == 'release' )
+              )
+          - name: "overlays"
+            value:
+            - key: image_tag
+              expression: "body.tag"
+            - key: event
+              expression: "\"release\""
+
+      bindings:
+        - name: revision
+          value: $(body.commit.id)
+        - name: repo-url
+          value: $(body.project.http_url)
+        - name: REPONAME
+          value: $(body.project.path_with_namespace)
+        - name: id
+          value: $(header.X-Gitlab-Event-UUID)
+        - name: IMAGE
+          value: registry.gitlab.com/$(body.commit.author.name)/$(body.project.name)
+        - name: NAME
+          value: $(body.project.name)
+        - ref: capten-pipeline
+      template:
+        ref: gitlab-capten-pipeline
+
+
+    - name: tag-event-github
+      interceptors:
+        - ref:
+            name: "cel"
+          params:
+            - name: "filter"
+              value: >
+                (
+                  header.match('x-github-event', 'create') && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master' || body.ref_type == 'tag'  )
+                )
+            - name: "overlays"
+              value:
+              - key: image_tag
+                expression: "body.ref"
+              - key: event
+                expression: "\"tag\""
+      bindings:
+      - name: revision
+        value: $(body.master_branch)
+      - name: repo-url
+        value: $(body.repository.clone_url)
+      - name: REPONAME
+        value: $(body.repository.full_name)
+      - name: IMAGE
+        value: ghcr.io/$(body.repository.full_name)
+      - name: id
+        value: $(header.X-GitHub-Delivery)
+      - name: NAME
+        value: $(body.repository.name)
+      - ref: capten-pipeline
+      template:
+        ref: capten-pipeline
+
+    - name: pull-request-github
+      interceptors:  
+        - ref:
+            name: "cel"
+          params:
+            - name: "filter"
+              value: >
+                (
+                  header.match('x-github-event', 'pull_request') && (body.action in ['opened'] || body.action in ['reopened'])  && (body.pull_request.base.ref == 'main' || body.pull_request.base.ref == 'master')         
+                )
+            - name: "overlays"
+              value: 
+              - key: image_tag
+                expression: "['pr', string(body.pull_request.number)].join('-')"
+              - key: event
+                expression: "\"pull-request\""
+      bindings:
+        - name: revision
+          value: $(body.pull_request.head.sha)
+        - name: repo-url
+          value: $(body.repository.clone_url)
+        - name: IMAGE
+          value: ghcr.io/$(body.repository.full_name)  
+        - name: REPONAME
+          value: $(body.repository.full_name)
+        - name: id
+          value: $(header.X-GitHub-Delivery)
+        - name: NAME
+          value: $(body.repository.name)
+        - ref: capten-pipeline
+      template:
+        ref: capten-pipeline
+
+    - name: release-event-github
+      interceptors:
+      - ref:
+          name: "cel"
+        params:
+          - name: "filter"
+            value: >
+              (   
+                header.match('x-github-event', 'release') && (body.ref == 'refs/heads/main' || body.ref == 'refs/heads/master' || body.ref == 'refs/heads/gh-pages' || body.action in ['created']  )
+              )
+          - name: "overlays"
+            value:
+            - key: image_tag
+              expression: "body.release.tag_name"
+            - key: event
+              expression: "\"release\""
+            
+      bindings:
+        - name: revision
+          value: $(body.release.target_commitish)
+        - name: repo-url
+          value: $(body.repository.clone_url)
+        - name: IMAGE
+          value: ghcr.io/$(body.repository.full_name)  
+        - name: REPONAME
+          value: $(body.repository.full_name)
+        - name: id
+          value: $(header.X-GitHub-Delivery)
+        - name: NAME
+          value: $(body.repository.name)
+        - ref: capten-pipeline
+      template:
+        ref: capten-pipeline
+  
+  resources:
+    kubernetesResource:
+      spec:
+        template:
+          spec:
+            serviceAccountName: capten-pipeline
+            containers:
+              - resources:
+                  requests:
+                    memory: "64Mi"
+                    cpu: "250m"
+                  limits:
+                    memory: "128Mi"
+                    cpu: "500m"
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: capten-pipeline
+  namespace: tekton-pipelines
+spec:
+  params:
+  - name: PLRNAME
+    value: github-proj-uuid-pr-
+  - name: IMAGETAG
+    value: $(extensions.image_tag)
+  - name: EVENT
+    value: $(extensions.event)
+  - name: rel-tag
+    value: $(extensions.image_tag)
+
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: capten-pipeline
+  namespace: tekton-pipelines
+spec:
+  params:
+  - name: repo-url
+    description: repo url
+  - name: revision
+    description: sha,branch
+  - name: IMAGE
+    description: image name
+  - name: IMAGETAG
+    description: tag of img
+  - name: EVENT
+    description: event occured
+  - name: REPONAME
+    description: repo name
+  - name: rel-tag
+    description: release tag
+  - name: id
+    description: pipelinerun id
+  - name: NAME
+    description: application name
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1beta1
+    kind: PipelineRun
+    metadata:
+      name: trigger-$(tt.params.id)
+    spec:
+      serviceAccountName: capten-pipeline
+      pipelineRef:
+        name: capten-pipeline
+      podTemplate:
+        securityContext:
+          fsGroup: 65532
+      workspaces:
+      - name: shared-data
+        volumeClaimTemplate:
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 10Gi
+      - name: git-credentials
+        secret:
+          secretName: "gitcred-capten-pipeline"
+      - name: docker-credentials
+        secret:
+          secretName: "docker-credentials-capten-pipeline"
+      - name: deploy-creds
+        secret:
+          secretName: extraconfig-capten-pipeline
+      - name: argo-cred
+        secret:
+          secretName: argocd-capten-pipeline
+      - name: dockerconfig
+        secret:
+          secretName: cosign-docker-secret-capten-pipeline
+      - name: cosign
+        secret:
+          secretName: cosign-keys
+      - name: cosign-pub
+        secret:
+          secretName: cosign-keys
+      params:
+      - name: repo-url
+        value: $(tt.params.repo-url)
+      - name: revision
+        value: $(tt.params.revision)
+      - name: imageUrl
+        value: $(tt.params.IMAGE)
+      - name: imageTag
+        value: $(tt.params.IMAGETAG)
+      - name: eventname
+        value: $(tt.params.EVENT)
+      - name: reponame
+        value: $(tt.params.REPONAME)
+      - name: retag
+        value: $(tt.params.rel-tag)
+      - name: ID
+        value: $(tt.params.id)
+      - name: NAME
+        value: $(tt.params.NAME)
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: gitlab-capten-pipeline
+  namespace: tekton-pipelines
+spec:
+  params:
+  - name: repo-url
+    description: repo url
+  - name: revision
+    description: sha,branch
+  - name: IMAGE
+    description: image name
+  - name: IMAGETAG
+    description: tag of img
+  - name: EVENT
+    description: event occured
+  - name: REPONAME
+    description: repo name
+  - name: rel-tag
+    description: release tag
+  - name: id
+    description: pipelinerun id
+  - name: NAME
+    description: application name
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1beta1
+    kind: PipelineRun
+    metadata:
+      name: trigger-$(tt.params.id)
+    spec:
+      serviceAccountName: capten-pipeline
+      pipelineRef:
+        name: capten-pipeline-gitlab
+      podTemplate:
+        securityContext:
+          fsGroup: 65532
+      workspaces:
+      - name: shared-data
+        volumeClaimTemplate:
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 10Gi
+      - name: git-credentials
+        secret:
+          secretName: "gitcred-capten-pipeline-gitlab"
+      - name: docker-credentials
+        secret:
+          secretName: "docker-credentials-capten-pipeline-gitlab"
+      - name: deploy-creds
+        secret:
+          secretName: extraconfig-capten-pipeline-gitlab
+      - name: argo-creds
+        secret:
+          secretName: argocd-capten-pipeline
+      - name: dockerconfig
+        secret:
+          secretName: cosign-docker-secret-capten-pipeline-gitlab
+      - name: cosign-keys
+        secret:
+          secretName: cosign-keys
+      params:
+      - name: repo-url
+        value: $(tt.params.repo-url)
+      - name: revision
+        value: $(tt.params.revision)
+      - name: imageUrl
+        value: $(tt.params.IMAGE)
+      - name: imageTag
+        value: $(tt.params.IMAGETAG)
+      - name: eventname
+        value: $(tt.params.EVENT)
+      - name: reponame
+        value: $(tt.params.REPONAME)
+      - name: retag
+        value: $(tt.params.rel-tag)
+      - name: ID
+        value: $(tt.params.id)
+      - name: NAME
+        value: $(tt.params.NAME)

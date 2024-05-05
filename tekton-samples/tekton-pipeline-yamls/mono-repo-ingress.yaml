@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod-cluster
+    kubernetes.io/force-ssl-redirect: "true"
+    kubernetes.io/ssl-redirect: "true"
+    kubernetes.io/tls-acme: "true"
+    traefik.ingress.kubernetes.io/rewrite-target: /
+  name: mono-capten-pipeline
+  namespace: tekton-pipelines
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: tekton.awsagent.optimizor.app
+    http:
+      paths:
+      - backend:
+          service:
+            name: el-mono-capten-pipeline
+            port:
+              number: 8080
+        path: /mono-capten-pipeline
+        pathType: Prefix
+status:
+  loadBalancer: {}
