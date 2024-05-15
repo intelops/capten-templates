@@ -1,0 +1,19 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  annotations:
+    tekton.dev/git-0: "https://gitlab.com"
+  name: docker-external
+  namespace: tekton-pipelines
+spec:
+  refreshInterval: "10s"
+  secretStoreRef:
+    name: vault-root-store
+    kind: SecretStore
+  target:
+    name: docker-credentials-capten-pipeline-gitlab
+  data:
+  - secretKey: config.json
+    remoteRef:
+      key: generic/container-registry/e39fafd5-93be-4806-ab0e-5f976411bf1c
+      property: config.json
