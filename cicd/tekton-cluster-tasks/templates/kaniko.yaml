@@ -46,6 +46,13 @@ spec:
     - name: build-and-push
       workingDir: $(workspaces.source.path)
       image: $(params.BUILDER_IMAGE)
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1500Mi
+        requests:
+          cpu: 500m
+          memory: 300Mi
       args:
         - $(params.EXTRA_ARGS)
         - --dockerfile=$(params.DOCKERFILE)
@@ -62,6 +69,13 @@ spec:
     - name: write-url
       workingDir: $(workspaces.source.path)
       image: ghcr.io/kube-tarian/helmrepo-supporting-tools/bash:5.1.4
+      resources:
+        limits:
+          cpu: 100m
+          memory: 200Mi
+        requests:
+          cpu: 2m
+          memory: 5Mi
       script: |
         set -e
         image="$(params.IMAGE)"

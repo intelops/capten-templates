@@ -123,6 +123,13 @@ spec:
   steps:  
     - name: clone
       image: "$(params.gitInitImage)"
+      resources:
+        limits:
+          cpu: 200m
+          memory: 100Mi
+        requests:
+          cpu: 50m
+          memory: 30Mi
       env:
       - name: HOME
         value: "$(params.userHome)"

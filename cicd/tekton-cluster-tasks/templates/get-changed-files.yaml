@@ -10,6 +10,13 @@ spec:
   steps:
     - name: get-changed-files
       image: ghcr.io/kube-tarian/helmrepo-supporting-tools/build1:latest
+      resources:
+        limits:
+          cpu: 200m
+          memory: 100Mi
+        requests:
+          cpu: 50m
+          memory: 30Mi
       script: |
         #!/bin/sh
         git config --global --add safe.directory /workspace/source

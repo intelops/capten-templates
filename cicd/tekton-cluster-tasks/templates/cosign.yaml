@@ -21,6 +21,13 @@ spec:
   steps:
     - name: cosign-sign
       image: ghcr.io/kube-tarian/helmrepo-supporting-tools/cosign:v2.2.2
+      resources:
+        limits:
+          cpu: 200m
+          memory: 300Mi
+        requests:
+          cpu: 3m
+          memory: 20Mi
       script: |
         #!/usr/bin/env bash
         mkdir -p ~/.docker/

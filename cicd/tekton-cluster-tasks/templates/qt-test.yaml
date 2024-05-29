@@ -30,6 +30,13 @@ spec:
   steps:
     - name: install-and-run-qt
       image: ghcr.io/intelops/quality-trace/cli:latest
+      resources:
+        limits:
+          cpu: 100m
+          memory: 200Mi
+        requests:
+          cpu: 2m
+          memory: 5Mi
       script: |
         
         # Configure and Run Quality-trace CLI

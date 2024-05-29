@@ -11,6 +11,13 @@ spec:
   steps:
     - name: get-latest-commit-id
       image: ghcr.io/kube-tarian/helmrepo-supporting-tools/curl:latest
+      resources:
+        limits:
+          cpu: 200m
+          memory: 100Mi
+        requests:
+          cpu: 50m
+          memory: 30Mi
       script: |
         export TOKEN=`cat /workspace/basic-auth/password`
         COMMIT_ID=$(curl -s -H "Authorization: token ${TOKEN}" "https://api.github.com/repos/$(params.REPONAME)/commits/$(params.REVISION)" | jq -r '.sha')

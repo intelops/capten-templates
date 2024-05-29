@@ -8,12 +8,19 @@ spec:
   - description: The image to be signed by cosign.
     name: image
     type: string
-  steps:
-  - image: ghcr.io/kube-tarian/helmrepo-supporting-tools/cosign:v2.2.2
-    name: cosign-sign
   - name: registry
     description: "registry"
     type: string
+  steps:
+  - image: ghcr.io/kube-tarian/helmrepo-supporting-tools/cosign:v2.2.2
+    name: cosign-sign
+    resources:
+      limits:
+        cpu: 200m
+        memory: 300Mi
+      requests:
+        cpu: 3m
+        memory: 20Mi
     resources: {}
     script: |
       #!/usr/bin/env bash
