@@ -138,6 +138,13 @@ spec:
           value: $(params.SHEBANG)
 
       image: $(params.IMAGE)
+      resources:
+        limits:
+          cpu: 100m
+          memory: 200Mi
+        requests:
+          cpu: 2m
+          memory: 4Mi
       script: |
         #!$(params.SHEBANG)
 
