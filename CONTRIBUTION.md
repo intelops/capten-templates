@@ -20,7 +20,7 @@ capten-templates/
 │   └── tekton
 │       ├── argocd-apps/			# Argocd apps related to tekton directory.
 │       │   └── templates/
-│       ├── pipeline-template/		# Tekton pipelines are stored in template format.
+│       ├── pipeline-template/			# Tekton pipelines are stored in template format.
 │       │   └── templates/
 │       └── tekton-main-app.yaml		# Argocd main app for tekton directory.
 │
@@ -48,7 +48,7 @@ capten-templates/
 │       ├── packages-def/			# Provider config and composite resource definition.
 │       │   └── k8s/
 │       │       └── aws/
-│       ├── providers				# Providers are deployed here once synced via capten.
+│       ├── providers/				# Providers are deployed here once synced via capten.
 │       └── crossplane-main-app.yaml		# Argocd main app for crossplane directory.
 │
 ├── tekton-samples/				# Examples related to external secrets and tekton components.
@@ -111,7 +111,7 @@ At present we have external secrets for github and gitlab registries under the d
 
 
 ## Directory rundown:
-Let us have a brief look at all the 4 main directories in capten-templates one by one.
+This is a brief look at all the 4 main directories in capten-templates one by one.
 
 1. cicd
 2. default-apps-templates
