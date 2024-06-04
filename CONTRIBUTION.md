@@ -51,11 +51,11 @@ capten-templates/
 │       ├── providers/				# Providers are deployed here once synced via capten.
 │       └── crossplane-main-app.yaml		# Argocd main app for crossplane directory.
 │
-├── tekton-samples/				# Examples related to external secrets and tekton components.
-│   ├── external-secrets/
-│   │   ├── github-external-secrets/
-│   │   └── gitlab-external-secrets/
-│   └── tekton-pipeline-yamls/
+└── tekton-samples/				# Examples related to external secrets and tekton components.
+    ├── external-secrets/
+    │   ├── github-external-secrets/
+    │   └── gitlab-external-secrets/
+    └── tekton-pipeline-yamls/
 ```
 
 ## How to contribute to capten-templates:
@@ -104,7 +104,7 @@ New components and addons can be added under the resources section under a new n
 Presently, we are supporting aws cloud provider. As more cloud providers come into the picture, we need to deploy the yaml files specific to the cloud provider deployed. Any contributions regarding this aspect is welcome.
 
 ### 4. Adding custom tasks:
-Custom tasks are stored under the directory cicd/tekton-cluster-tasks. Any new custom tasks can be added here.
+Tasks are stored under the directory cicd/tekton-cluster-tasks. Any new custom tasks can be added here.
 
 ### 5. Adding new registry as a source for tekton:
 At present we have external secrets for github and gitlab registries under the directory tekton-samples/external-secrets. External secrets with new registries can be added here.
@@ -118,7 +118,7 @@ This section provides a brief look at all the 4 main directories in capten-templ
 3. infra
 4. tekton-samples
 
-**Note:** Argocd apps sub-directory in each directory will manage deployment of the same directory which is watched by a main app.
+**Note:** Argocd apps sub-directory in each directory will manage deployment of the same directory. The argocd apps sub-directory will be watched by a main app.
 
 1. cicd:
   - tekton-cluster-tasks -> Custom tekton tasks are given here. You can add new ones as required
