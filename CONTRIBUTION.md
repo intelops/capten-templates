@@ -111,7 +111,7 @@ At present we have external secrets for github and gitlab registries under the d
 
 
 ## Directory rundown:
-This is a brief look at all the 4 main directories in capten-templates one by one.
+This section provides a brief look at all the 4 main directories in capten-templates one by one.
 
 1. cicd
 2. default-apps-templates
@@ -133,6 +133,7 @@ This is a brief look at all the 4 main directories in capten-templates one by on
   - clusters/app-configs -> Empty by default. Will be deployed via argocd once cluster is created.
   - clusters/cluster-configs -> Empty by default. User is required to add cluster-claim yaml to trigger cluster creation.
   - clusters/compositions -> Composition file is stored here.
+
   
   - crossplane/packages-def -> Provider config and composite resource definition are stored here.
   - crossplane/providers -> Empty by default. Will be deployed once capten is synced.
