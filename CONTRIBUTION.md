@@ -1,13 +1,13 @@
-#Contribution Guidelines:
+# Contribution Guidelines:
 Please read this guide if you plan to contribute to this repo. We welcome any kind of contribution.
 
-##Reporting Issues:
+## Reporting Issues:
 If you find a bug while working with capten-templates, please [open an issue on GitHub](https://github.com/intelops/capten-templates/issues/new?labels=kind%2Fbug&template=bug-report.md&title=Bug:) and let us know what went wrong. We will try to fix it as quickly as we can.
 
-##Feature Requests:
+## Feature Requests:
 You are more than welcome to open issues in this project to [suggest new features](https://github.com/intelops/capten-templates/issues/new?labels=kind%2Ffeature&template=feature-request.md&title=Feature%20Request:).
 
-##Directory Structure
+## Directory Structure
 
 capten-templates/
 │
@@ -57,7 +57,7 @@ capten-templates/
 │   └── tekton-pipeline-yamls/
 
 
-##How to contribute to capten-templates:
+## How to contribute to capten-templates:
 You can generally contribute capten-templates in 4 ways:
 
 1. Updating and adding new providers
@@ -66,7 +66,7 @@ You can generally contribute capten-templates in 4 ways:
 4. Adding custom tasks
 5. Adding new registry as a source for tekton
 
-###1. Updating and adding new providers:
+### 1. Updating and adding new providers:
 As mentioned above, the providers are present in the directory infra/crossplane/providers. You can add new providers in this directory.
 Also, new packages will constantly be updated by crossplane for different cloud providers. They can be updated in the package section in the provider yaml file.
 
@@ -79,7 +79,7 @@ spec:
   package: xpkg.upbound.io/crossplane-contrib/provider-aws:v0.33.0
 ```
 
-###2. Adding new addons and components in crossplane composition as required
+### 2. Adding new addons and components in crossplane composition as required
 Addons and components can be appended in crossplane composition file. The composition file is present under infra/clusters/compositions/aws/eks.yaml
 New components and addons can be added under the resources section under a new name. An example using vpc is shown below:
 (Please refer crossplane documents on how to initialize patches using both the definition and composition file).
@@ -99,17 +99,17 @@ New components and addons can be added under the resources section under a new n
       toFieldPath: metadata.name
 ```
 
-###3. Applying crossplane files depending on the cloud providers deployed:
+### 3. Applying crossplane files depending on the cloud providers deployed:
 Presently, we are supporting aws cloud provider. As more cloud providers come into the picture, we need to deploy the yaml files specific to the cloud provider deployed. Any contributions regarding this aspect is welcome.
 
-###4. Adding custom tasks:
+### 4. Adding custom tasks:
 Custom tasks are stored under the directory cicd/tekton-cluster-tasks. Any new custom tasks can be added here.
 
-###5. Adding new registry as a source for tekton:
+### 5. Adding new registry as a source for tekton:
 At present we have external secrets for github and gitlab registries under the directory tekton-samples/external-secrets. External secrets with new registries can be added here.
 
 
-##Directory rundown:
+## Directory rundown:
 Let us have a brief look at all the 4 main directories in capten-templates one by one.
 
 1. cicd
@@ -117,7 +117,7 @@ Let us have a brief look at all the 4 main directories in capten-templates one b
 3. infra
 4. tekton-samples
 
-**_Note:_** Argocd apps sub-directory in each directory will manage deployment of the same directory which is watched by a main app.
+**Note:** Argocd apps sub-directory in each directory will manage deployment of the same directory which is watched by a main app.
 
 1. cicd:
   - tekton-cluster-tasks -> Custom tekton tasks are given here. You can add new ones as required
