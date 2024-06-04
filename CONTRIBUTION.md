@@ -9,6 +9,7 @@ You are more than welcome to open issues in this project to [suggest new feature
 
 ## Directory Structure
 
+```
 capten-templates/
 │
 ├── cicd/
@@ -55,7 +56,7 @@ capten-templates/
 │   │   ├── github-external-secrets/
 │   │   └── gitlab-external-secrets/
 │   └── tekton-pipeline-yamls/
-
+```
 
 ## How to contribute to capten-templates:
 You can generally contribute capten-templates in 4 ways:
