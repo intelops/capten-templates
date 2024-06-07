@@ -12,7 +12,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: "tekton.awsagent.optimizor.app"
+    - host: "tekton.domain.com"
       http:
         paths:
           - path: "/capten-pipeline"
@@ -22,3 +22,7 @@ spec:
                 name: "el-capten-pipeline"
                 port:
                   number: 8080
+  tls:
+  - hosts:
+    - tekton.domain.com
+    secretName: tekon-eventlistner-cert
