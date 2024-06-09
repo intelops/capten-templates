@@ -29,9 +29,9 @@ spec:
 
   steps:
     - name: install-and-run-qt
-      image: ghcr.io/intelops/quality-trace/cli:latest
+      image: ghcr.io/intelops/qualitytrace/cli:latest
       script: |
         
         # Configure and Run Quality-trace CLI
-        quality-trace configure --endpoint $(params.QT_SERVER)
-        quality-trace run test --file /workspace/output/$(params.qt_path)/test.yaml -o json
+        qualitytrace configure --endpoint $(params.QT_SERVER)
+        qualitytrace run test --file /workspace/output/$(params.qt_path)/test.yaml -o json
