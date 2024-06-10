@@ -5,12 +5,16 @@ metadata:
 spec:
   refreshInterval: "10s"
   secretStoreRef:
-    name: vault-store
+    name: vault-root-store
     kind: SecretStore
   target:
-    name: cosign-key-secret
+    name: cosign-keys
   data:
   - secretKey: cosign.key
     remoteRef:
       key: generic/cosign/signer
       property: cosign.key
+  - secretKey: cosign.pub
+    remoteRef:
+      key: generic/cosign/signer
+      property: cosign.pub
