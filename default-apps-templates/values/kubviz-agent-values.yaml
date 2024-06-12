@@ -1,6 +1,10 @@
 clusterName: {{.ClusterName}}
 nats:
+  {{if eq .ClusterType "talos"}}
   host: {{.LoadBalancerHost}}
+  {{else if eq .ClusterType "cloud-managed"}}
+  host: {{.NatsLoadBalancerHost}}
+  {{end}}
   auth:
     secret:
       name: "vault-nats-secret"
