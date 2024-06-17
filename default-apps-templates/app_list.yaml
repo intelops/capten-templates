@@ -33,7 +33,7 @@ defaultApps:
     repoURL: 'https://intelops.github.io/kubviz/'
     namespace: observability
     chart: agent
-    targetRevision: "1.1.21"
+    targetRevision: "1.1.23"
     valuesPath: infra/clusters/app-configs/{{.ClusterName}}/kubviz-agent-values.yaml
   - name: external-secrets
     repoURL: 'https://kube-tarian.github.io/helmrepo-supporting-tools'

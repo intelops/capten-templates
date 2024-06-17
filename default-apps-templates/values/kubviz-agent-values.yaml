@@ -11,3 +11,5 @@ nats:
       key: "token"
 persistence:
   enabled: true
+kuberhealthy:
+  enabled: false

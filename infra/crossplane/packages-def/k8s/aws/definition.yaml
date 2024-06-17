@@ -58,6 +58,18 @@ spec:
               nodePoolStatus:
                 description: The status of the node pool
                 type: string
+              oidcIssuerUrl:
+                type: string
+              oidcEKS:
+                type: string
+              accountID:
+                  type: string
+              roleArnCSI:
+                type: string
+              roleArnCAS:
+                type: string
+              roleArnCSI:
+                type: string
     additionalPrinterColumns:
     - name: clusterName
       type: string
