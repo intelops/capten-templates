@@ -19,6 +19,9 @@ spec:
     base:
       apiVersion: eks.aws.crossplane.io/v1beta1
       kind: Cluster
+      metadata:
+        labels:
+          role: controlplane
       spec:
         forProvider:
           region: us-west-2
@@ -55,6 +58,17 @@ spec:
       toFieldPath: status.controlPlaneStatus
     - fromFieldPath: spec.writeConnectionSecretToRef.namespace
       toFieldPath: spec.writeConnectionSecretToRef.namespace
+    - type: ToCompositeFieldPath
+      fromFieldPath: status.atProvider.identity.oidc.issuer
+      toFieldPath: status.oidcIssuerUrl
+    - type: ToCompositeFieldPath
+      fromFieldPath: status.atProvider.identity.oidc.issuer
+      toFieldPath: status.oidcEKS
+      transforms:
+        - type: string
+          string:
+            type: TrimPrefix
+            trim: 'https://'
     readinessChecks:
     - type: MatchString
       fieldPath: status.atProvider.status
@@ -113,6 +127,9 @@ spec:
     base:
       apiVersion: iam.aws.crossplane.io/v1beta1
       kind: Role
+      metadata:
+        labels:
+          role: controlplane
       spec:
         forProvider:
           assumeRolePolicyDocument: |
@@ -181,6 +198,16 @@ spec:
         - type: string
           string:
             fmt: "%s-nodegroup"
+    - type: ToCompositeFieldPath
+      fromFieldPath: status.atProvider.arn
+      toFieldPath: status.accountID
+      transforms:
+        - type: string
+          string:
+            type: Regexp
+            regexp:
+              match: 'arn:aws:iam::(\d+):.*'
+              group: 1
   - name: iamattachment-controlplane
     base:
       apiVersion: iam.aws.crossplane.io/v1beta1
@@ -445,4 +472,122 @@ spec:
     patches:
     - fromFieldPath: spec.id
       toFieldPath: metadata.name
+      
+  - name: eks-oidc
+    base:
+      apiVersion: iam.aws.crossplane.io/v1beta1
+      kind: OpenIDConnectProvider
+      spec:
+        forProvider:
+          clientIDList:
+            - sts.amazonaws.com
+          thumbprintList:
+            - "9e99a48a9960b14926bb7f3b02e22da2b0ab7280"
+    patches:
+    - fromFieldPath: status.oidcIssuerUrl
+      toFieldPath: spec.forProvider.url
+      policy:
+        fromFieldPath: Required
 
+  - name: csi-role
+    base:
+      apiVersion: iam.aws.crossplane.io/v1beta1
+      kind: Role
+      spec:
+        forProvider:
+          assumeRolePolicyDocument: ""
+    patches:
+    - type: ToCompositeFieldPath
+      fromFieldPath: status.atProvider.arn
+      toFieldPath: status.roleArnCSI
+    - type: CombineFromComposite
+      combine:
+        variables:
+        - fromFieldPath: status.accountID
+        - fromFieldPath: status.oidcEKS
+        - fromFieldPath: status.oidcEKS
+        - fromFieldPath: status.oidcEKS
+        strategy: string
+        #TODO need to create a k8s service account called projectname-oss-serviceaccount
+        string:
+          fmt: |
+            {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "sts:AssumeRoleWithWebIdentity",
+                  "Principal": {
+                    "Federated": "arn:aws:iam::%s:oidc-provider/%s"
+                  },
+                  "Condition": {
+                    "StringEquals": {
+                      "%s:aud": "sts.amazonaws.com",
+                      "%s:sub": "system:serviceaccount:kube-system:ebs-csi-controller-sa"
+                    }
+                  }
+                }
+              ]  
+            } 
+      toFieldPath: spec.forProvider.assumeRolePolicyDocument
+      policy:
+        fromFieldPath: Required 
+    - fromFieldPath: spec.id
+      toFieldPath: metadata.name
+      transforms:
+        - type: string
+          string:
+            fmt: "%s-ebs-csi-driver"     
+    - fromFieldPath: spec.id
+      toFieldPath: metadata.labels.role
+      transforms:
+        - type: string
+          string:
+            fmt: "%s-ebs-csi-driver"
+
+  - name: csi-policy-attachment
+    base:
+      apiVersion: iam.aws.crossplane.io/v1beta1
+      kind: RolePolicyAttachment
+      spec:
+        forProvider:
+          policyArn: arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
+          roleNameSelector:
+            matchControllerRef: true
+            matchLabels:
+              role: csi-role
+    patches:
+    - fromFieldPath: spec.id
+      toFieldPath: metadata.name
+      transforms:
+        - type: string
+          string:
+            fmt: "%s-ebs-csi-driver"
+    - fromFieldPath: spec.id
+      toFieldPath: spec.forProvider.roleNameSelector.matchLabels.role
+      transforms:
+        - type: string
+          string:
+            fmt: "%s-ebs-csi-driver"
+
+  - name: eks-csi-driver
+    base:
+      apiVersion: eks.aws.crossplane.io/v1alpha1
+      kind: Addon
+      metadata:
+      spec:
+        forProvider:
+          addonName: aws-ebs-csi-driver
+          addonVersion: v1.18.0-eksbuild.1
+          region: us-west-2
+          clusterNameSelector:
+            matchControllerRef: true
+            matchLabels:
+              role: controlplane  
+          resolveConflicts: OVERWRITE
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: status.roleArnCSI
+      toFieldPath: spec.forProvider.serviceAccountRoleARN
+      policy:
+        fromFieldPath: Required     
