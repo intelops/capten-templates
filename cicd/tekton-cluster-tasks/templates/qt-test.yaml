@@ -29,7 +29,7 @@ spec:
 
   steps:
     - name: install-and-run-qt
-      image: ghcr.io/intelops/qualitytrace/cli:latest
+      image: ghcr.io/intelops/qualitytrace/cli:v1.0.0
       script: |
         
         # Configure and Run Quality-trace CLI
