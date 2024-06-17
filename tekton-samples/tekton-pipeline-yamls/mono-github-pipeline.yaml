@@ -161,7 +161,7 @@ spec:
       kind: ClusterTask
     params:
     - name: QT_SERVER
-      value: http://quality-trace.aws.optimizor.app/
+      value: http://qualitytrace.domain.com
     - name: qt_path
       value: $(tasks.get-changed-files.results.changed-dir)/qt_test
     workspaces:

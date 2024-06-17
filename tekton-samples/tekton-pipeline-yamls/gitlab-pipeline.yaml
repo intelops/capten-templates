@@ -213,7 +213,7 @@ spec:
   - name: qt-testcase
     params:
     - name: QT_SERVER
-      value: http://quality-trace.awsagent.optimizor.app
+      value: http://qualitytrace.domain.com
     - name: qt_path
       value: qt_test
     runAfter:
