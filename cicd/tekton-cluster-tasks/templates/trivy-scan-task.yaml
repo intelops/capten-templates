@@ -1,0 +1,60 @@
+apiVersion: tekton.dev/v1beta1
+kind: ClusterTask
+metadata:
+  name: scan-image
+spec:
+  workspaces:
+    - name: output
+  params:
+    - name: image
+      type: string
+    - name: timeout
+      type: string
+      default: "5m"
+    - name: ID
+      type: string
+  steps:
+    - name: scan
+      image: aquasec/trivy:latest
+      script: |
+        #!/bin/sh
+        trivy image --timeout $(params.timeout) $(params.image)
+        trivy image --timeout $(params.timeout) -f json -o /workspace/output/trivy-report.json $(params.image)
+        trivy image --timeout $(params.timeout) $(params.image) | grep Total
+    - name: store-scan-result
+      image: postgres
+      env:
+      - name: POSTGRES_HOST
+        valueFrom:
+          secretKeyRef:
+            name: postgres-secret
+            key: host
+      - name: POSTGRES_USER
+        valueFrom:
+          secretKeyRef:
+            name: postgres-secret
+            key: user
+      - name: POSTGRES_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: postgres-secret
+            key: password
+      - name: POSTGRES_DB
+        valueFrom:
+          secretKeyRef:
+            name: postgres-secret
+            key: dbname
+      script: |
+        #!/bin/sh
+        # echo "Installing required packages..."
+        # apt-get update && apt-get install -y postgresql-client jq
+
+        echo "Storing Trivy scan results to PostgreSQL..."
+        export PGPASSWORD="${POSTGRES_PASSWORD}"
+
+        job_id=$(params.ID)
+        scan_result=$(cat /workspace/output/trivy-report.json | sed "s/'/''/g")
+
+        psql -h "${POSTGRES_HOST}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "\
+          INSERT INTO scan_results (job_id, image, scan_result) \
+          VALUES ('${job_id}', '$(params.image)', '${scan_result}')"
