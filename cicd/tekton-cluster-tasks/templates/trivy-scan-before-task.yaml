@@ -1,0 +1,67 @@
+apiVersion: tekton.dev/v1beta1
+kind: ClusterTask
+metadata:
+  name: scan-image-before
+spec:
+  workspaces:
+    - name: output
+  params:
+    - name: image
+      type: string
+    - name: timeout
+      type: string
+      default: "5m"
+    - name: ID
+      type: string
+  steps:
+    - name: scan
+      image: ghcr.io/kube-tarian/helmrepo-supporting-tools/trivy:latest
+      script: |
+        #!/bin/sh
+        trivy image --timeout $(params.timeout) $(params.image)
+        trivy image --timeout $(params.timeout) -f json -o /workspace/output/trivy-report.json $(params.image)
+        trivy image --timeout $(params.timeout) $(params.image) | grep Total
+    - name: store-scan-result
+      image: ghcr.io/kube-tarian/helmrepo-supporting-tools/trivy-db:1.0.0
+      env:
+      - name: POSTGRES_HOST
+        valueFrom:
+          secretKeyRef:
+            name: postgres-secret
+            key: host
+      - name: DB_USER
+        valueFrom:
+          secretKeyRef:
+            name: postgres-secret
+            key: user
+      - name: POSTGRES_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: postgres-secret
+            key: password
+      - name: DB_NAME
+        valueFrom:
+          secretKeyRef:
+            name: postgres-secret
+            key: dbname
+      - name: JSON_FILE
+        value: /workspace/output/trivy-report.json
+      script: |
+        #!/bin/bash
+        export PGPASSWORD="${POSTGRES_PASSWORD}"
+        export POSTGRES_HOST="${POSTGRES_HOST}"
+        export DB_NAME="${DB_NAME}"
+        export DB_USER="${DB_USER}"
+        export JSON_FILE="${JSON_FILE}"
+
+        /usr/local/bin/create_tables_before.sh
+
+        # echo "Storing Trivy scan results to PostgreSQL..."
+        job_id=$(params.ID)
+        scan_result=$(cat $JSON_FILE | sed "s/'/''/g")
+
+        psql -h "${POSTGRES_HOST}" -U "${DB_USER}" -d "${DB_NAME}" -c "\
+          INSERT INTO tekton_before_trivy_results (job_id, image) \
+          VALUES ('${job_id}', '$(params.image)')"
+
+        /usr/local/bin/insert_data_before.sh
